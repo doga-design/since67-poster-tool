@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Since 1967 Poster Tool</title>
   <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
   <style>
     @font-face {
       font-family: 'DharmaGothicE_ExLight_R';
@@ -453,6 +454,24 @@
       border-color: #fff;
     }
 
+    .export-actions {
+      display: grid;
+      gap: 8px;
+    }
+
+    .export-button-secondary {
+      background: #333;
+      color: var(--white);
+      border-color: #555;
+      font-weight: 400;
+    }
+
+    .export-button-secondary:hover {
+      background: #444;
+      border-color: #666;
+      color: var(--white);
+    }
+
     .resize-handle {
       cursor: col-resize;
       background: #242424;
@@ -853,7 +872,7 @@
       font-family: 'Geist', Arial, Helvetica, sans-serif;
       color: #d7d7d7;
       font-size: clamp(7px, 0.8vw, 10px);
-      letter-spacing: 0;
+      letter-spacing: 0.16em;
     }
 
     .qr {
@@ -1365,7 +1384,10 @@
 
       <section class="section">
         <h2 class="section-title">Export</h2>
-        <button class="export-button" id="export-button" type="button">Export as PNG</button>
+        <div class="export-actions">
+          <button class="export-button" id="export-button" type="button">Export as PNG</button>
+          <button class="export-button export-button-secondary" id="export-pdf-button" type="button">Export as PDF</button>
+        </div>
       </section>
     </aside>
 
@@ -1403,7 +1425,7 @@
           <footer class="footer">
             <div class="footer-text">
               <div class="date-line" id="date-line">OCT 8, 2026</div>
-              <div class="season-line" id="season-line">SEASON STARTS NOW.</div>
+              <div class="season-line" id="season-line">JOIN THE ULTIMATE WAIT.</div>
             </div>
             <img class="qr" src="img/qr-code-asset.png" alt="">
           </footer>
@@ -1444,6 +1466,9 @@
 
   <script>
     const HERO_CUTOUT_HANDOFF_KEY = 'since67:heroCutoutResult';
+    const POSTER_EXPORT_WIDTH = 3768;
+    const POSTER_EXPORT_HEIGHT = 4797;
+    const POSTER_PRINT_DPI = 300;
     const root = document.documentElement;
     const handle = document.getElementById('resize-handle');
     const poster = document.getElementById('poster');
@@ -1454,6 +1479,7 @@
     const dateLine = document.getElementById('date-line');
     const seasonLine = document.getElementById('season-line');
     const exportButton = document.getElementById('export-button');
+    const exportPdfButton = document.getElementById('export-pdf-button');
     const openHeroCutoutWorkspaceButton = document.getElementById('open-hero-cutout-workspace');
     const playerImage = document.getElementById('player');
     const playerThumb = document.getElementById('thumb-player');
@@ -1488,7 +1514,7 @@
     const fixedSublinePrefix = "WE'VE BEEN";
     const fixedSublineSuffix = 'TOGETHER.';
     const fixedDateLine = 'OCT 8, 2026';
-    const fixedSeasonLine = 'SEASON STARTS NOW.';
+    const fixedSeasonLine = 'JOIN THE ULTIMATE WAIT.';
     const fanCutoutModal = document.getElementById('fan-cutout-modal');
     const fanCutoutBody = document.getElementById('fan-cutout-body');
     const fanCutoutFooter = document.getElementById('fan-cutout-footer');
@@ -3185,33 +3211,84 @@
       window.addEventListener('mouseup', stopResize);
     });
 
-    exportButton.addEventListener('click', async () => {
-      exportButton.disabled = true;
-      exportButton.textContent = 'Exporting...';
+    async function capturePosterDataUrl() {
+      await waitForPosterAssets();
+      const selectedFan = getSelectedFanElement();
+      hideFanSelectionUI();
 
       try {
-        await waitForPosterAssets();
-        const selectedFan = getSelectedFanElement();
-        hideFanSelectionUI();
-        const exportWidth = Number(getComputedStyle(root).getPropertyValue('--export-width'));
+        const exportWidth = Number(getComputedStyle(root).getPropertyValue('--export-width')) || POSTER_EXPORT_WIDTH;
         const posterRect = poster.getBoundingClientRect();
-        const dataUrl = await htmlToImage.toPng(poster, {
+        return await htmlToImage.toPng(poster, {
           backgroundColor: null,
           cacheBust: true,
           pixelRatio: exportWidth / posterRect.width,
           width: posterRect.width,
           height: posterRect.height
         });
-        const link = document.createElement('a');
-        link.download = 'since67-poster.png';
-        link.href = dataUrl;
-        link.click();
+      } finally {
         if (selectedFan) {
           positionFanSelectionUI(selectedFan);
         }
+      }
+    }
+
+    function setExportButtonsDisabled(disabled) {
+      if (exportButton) exportButton.disabled = disabled;
+      if (exportPdfButton) exportPdfButton.disabled = disabled;
+    }
+
+    function downloadDataUrl(dataUrl, filename) {
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = dataUrl;
+      link.click();
+    }
+
+    function buildPrintReadyPdf(dataUrl) {
+      const pageWidthPt = (POSTER_EXPORT_WIDTH / POSTER_PRINT_DPI) * 72;
+      const pageHeightPt = (POSTER_EXPORT_HEIGHT / POSTER_PRINT_DPI) * 72;
+      const pdf = new window.jspdf.jsPDF({
+        orientation: 'portrait',
+        unit: 'pt',
+        format: [pageWidthPt, pageHeightPt],
+        compress: true
+      });
+
+      pdf.setProperties({
+        title: 'Since 1967 Poster',
+        subject: 'Since 67 poster export',
+        creator: 'Since 1967 Poster Tool',
+        keywords: 'since67, poster, print'
+      });
+
+      pdf.addImage(dataUrl, 'PNG', 0, 0, pageWidthPt, pageHeightPt, undefined, 'SLOW');
+      return pdf;
+    }
+
+    exportButton.addEventListener('click', async () => {
+      setExportButtonsDisabled(true);
+      exportButton.textContent = 'Exporting...';
+
+      try {
+        const dataUrl = await capturePosterDataUrl();
+        downloadDataUrl(dataUrl, 'since67-poster.png');
       } finally {
-        exportButton.disabled = false;
+        setExportButtonsDisabled(false);
         exportButton.textContent = 'Export as PNG';
+      }
+    });
+
+    exportPdfButton.addEventListener('click', async () => {
+      setExportButtonsDisabled(true);
+      exportPdfButton.textContent = 'Exporting...';
+
+      try {
+        const dataUrl = await capturePosterDataUrl();
+        buildPrintReadyPdf(dataUrl).save('since67-poster.pdf');
+      } finally {
+        setExportButtonsDisabled(false);
+        exportPdfButton.textContent = 'Export as PDF';
       }
     });
 
