@@ -29,6 +29,17 @@
       --field: #2a2a2a;
       --canvas: #1a1a1a;
       --export-width: 3768;
+      --export-height: 4797;
+      --qr-size: 8.8%;
+      --qr-inset-x: 4.3%;
+      --qr-inset-y: 1%;
+      --qr-leaf-width-px: 300;
+      --qr-leaf-lift: 0.45;
+      --qr-leaf-gap-cqh: 0.15;
+      --qr-inset-y-cqh: 1;
+      --qr-height-cqh: 6.904;
+      --qr-inset-x-cqw: 4.3;
+      --qr-size-cqw: 8.8;
       --digit-gap-1-2: -22%;
       --digit-gap-2-3: -17%;
       --digit-gap-3-4: -20%;
@@ -515,6 +526,7 @@
       color: #fff;
       font-family: Arial, Helvetica, sans-serif;
       isolation: isolate;
+      container-type: size;
     }
 
     .poster-layer {
@@ -876,9 +888,24 @@
     }
 
     .qr {
-      width: 8.8%;
+      right: var(--qr-inset-x);
+      bottom: var(--qr-inset-y);
+      width: var(--qr-size);
       aspect-ratio: 1;
       object-fit: cover;
+      z-index: 9;
+    }
+
+    .qr-leaf {
+      right: calc(var(--qr-inset-x-cqw) * 1cqw + var(--qr-size-cqw) * 1cqw / 2 - var(--qr-leaf-width-px) * 100cqi / var(--export-width) / 2);
+      bottom: calc(var(--qr-inset-y-cqh) * 1cqh + var(--qr-height-cqh) * 1cqh + var(--qr-leaf-gap-cqh) * 1cqh);
+      width: calc(var(--qr-leaf-width-px) * 100cqi / var(--export-width));
+      transform: translateY(calc(var(--qr-leaf-lift) * -1cqh));
+      height: auto;
+      max-width: none;
+      min-width: 0;
+      object-fit: contain;
+      z-index: 9;
     }
 
     .fan-cutout-modal[hidden] {
@@ -1427,8 +1454,10 @@
               <div class="date-line" id="date-line">OCT 8, 2026</div>
               <div class="season-line" id="season-line">JOIN THE ULTIMATE WAIT.</div>
             </div>
-            <img class="qr" src="img/qr-code-asset.png" alt="">
           </footer>
+
+          <img class="poster-layer qr" src="img/leafs-ticketmaster-qr.png" alt="" aria-hidden="true">
+          <img class="poster-layer qr-leaf" src="img/leaf-ice-blue-logo.png" alt="" aria-hidden="true">
 
           <div class="fan-selection-frame" id="fan-selection-frame" hidden aria-hidden="true"></div>
 
