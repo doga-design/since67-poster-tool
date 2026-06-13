@@ -1,0 +1,3291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cutout Studio</title>
+  <link rel="preload" href="img/wol-final.gif" as="image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #1a1a1a;
+      --surface: #222;
+      --field: #2a2a2a;
+      --accent: #f0f0f0;
+      --border: #373737;
+      --muted: #9c9c9c;
+      --white: #f5f5f5;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      overflow-x: hidden;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    html::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+
+    body {
+      margin: 0;
+      min-width: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      overflow-y: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      background: radial-gradient(circle, #333 1px, transparent 1px);
+      background-size: 24px 24px;
+      background-color: var(--bg);
+      color: var(--white);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border-radius: 0;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 14px;
+      width: min(900px, calc(100vw - 48px));
+      margin: 0 auto;
+      padding: 24px 0;
+    }
+
+    .topbar,
+    .bottombar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 58px;
+      border: 0;
+      background: transparent;
+      padding: 14px 18px;
+    }
+
+    .title {
+      margin: 0;
+      color: var(--white);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .stage-meta {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .poster-link {
+      color: var(--white);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+      white-space: nowrap;
+    }
+
+    .poster-link:hover {
+      color: #fff;
+    }
+
+    .dots {
+      display: flex;
+      gap: 7px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border: 1px solid #666;
+      background: transparent;
+      border-radius: 1px;
+    }
+
+    .dot.done {
+      background: var(--white);
+      border-color: var(--white);
+    }
+
+    .dot.current {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .workspace {
+      position: relative;
+      min-height: 620px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      padding: 24px;
+      overflow: hidden;
+    }
+
+    .stage {
+      min-height: 570px;
+      opacity: 0;
+      animation: fade-in 200ms ease forwards;
+    }
+
+    @keyframes fade-in {
+      to {
+        opacity: 1;
+      }
+    }
+
+    .stage-title {
+      margin: 0 0 8px;
+      color: var(--white);
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .stage-help {
+      margin: 0 0 18px;
+      max-width: 560px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .upload-zone {
+      min-height: 420px;
+      display: grid;
+      place-items: center;
+      border: 1px dashed #666;
+      background: var(--field);
+      color: var(--white);
+      cursor: pointer;
+      text-align: center;
+      transition: border-color 160ms ease, background 160ms ease;
+    }
+
+    .upload-zone:hover,
+    .upload-zone:focus {
+      border-color: var(--accent);
+      outline: none;
+    }
+
+    .upload-zone.dragging {
+      background: #303030;
+      border-color: var(--accent);
+    }
+
+    .upload-copy {
+      display: block;
+    }
+
+    .upload-copy > span {
+      display: block;
+      max-width: min(340px, 92vw);
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .upload-drop-preview {
+      display: block;
+      margin: 0 auto;
+      max-width: min(100%, 520px);
+      width: 100%;
+      height: auto;
+      border: 0;
+      outline: none;
+      box-shadow: none;
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+
+    .upload-copy strong {
+      display: block;
+      margin-bottom: 12px;
+      font-size: 18px;
+      text-transform: uppercase;
+    }
+
+    .upload-copy span,
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .upload-cta {
+      margin-top: 16px;
+      min-height: 42px;
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #111;
+      padding: 0 14px;
+      cursor: pointer;
+      text-transform: uppercase;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+
+    .upload-cta:hover {
+      background: #fff;
+      border-color: #fff;
+    }
+
+    .file-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+    }
+
+    .file-meta {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .image-stage {
+      display: grid;
+      place-items: center;
+      gap: 18px;
+    }
+
+    .crop-frame {
+      position: relative;
+      display: inline-block;
+      max-width: 800px;
+      max-height: 600px;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .crop-frame img,
+    .preview-img {
+      display: block;
+      max-width: 800px;
+      max-height: 600px;
+      width: auto;
+      height: auto;
+    }
+
+    .crop-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .stage-actions,
+    .inline-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .primary,
+    .secondary,
+    .preset,
+    .toggle-button,
+    .swatch {
+      min-height: 42px;
+      border: 1px solid var(--border);
+      background: #333;
+      color: var(--white);
+      padding: 0 16px;
+      cursor: pointer;
+      text-transform: uppercase;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+
+    .primary {
+      background: var(--accent);
+      color: #101010;
+      border-color: var(--accent);
+    }
+
+    .primary:hover {
+      background: #fff;
+      border-color: #fff;
+    }
+
+    .primary:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .secondary {
+      border-color: transparent;
+      background: transparent;
+      color: var(--muted);
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+
+    .secondary:hover {
+      color: var(--white);
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: stretch;
+      min-height: 460px;
+    }
+
+    .panel {
+      min-height: 420px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--border);
+      background: var(--field);
+      padding: 18px;
+    }
+
+    .panel-label {
+      align-self: start;
+      justify-self: stretch;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .checker {
+      background-color: #202020;
+      background-image:
+        linear-gradient(45deg, #2d2d2d 25%, transparent 25%),
+        linear-gradient(-45deg, #2d2d2d 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #2d2d2d 75%),
+        linear-gradient(-45deg, transparent 75%, #2d2d2d 75%);
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+      background-size: 20px 20px;
+    }
+
+    .loader {
+      display: grid;
+      place-items: center;
+      gap: 18px;
+      text-align: center;
+    }
+
+    .loader-gif-wrap {
+      display: grid;
+      place-items: center;
+      min-height: 200px;
+    }
+
+    .loader-gif {
+      width: min(360px, 82vw);
+      height: auto;
+      max-height: min(480px, 52vh);
+      object-fit: contain;
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+
+    .silhouette-preview {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: min(620px, 100%);
+      min-height: 420px;
+      margin: 0 auto;
+    }
+
+    .shape-svg,
+    .cutout-preview {
+      grid-area: 1 / 1;
+      max-width: 620px;
+      max-height: 420px;
+    }
+
+    .shape-svg {
+      overflow: visible;
+    }
+
+    .cutout-preview {
+      position: relative;
+      z-index: 2;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .controls {
+      display: grid;
+      gap: 14px;
+      width: min(760px, 100%);
+      margin: 18px auto 0;
+      border: 1px solid var(--border);
+      background: var(--field);
+      padding: 16px;
+    }
+
+    .control-row {
+      display: grid;
+      grid-template-columns: minmax(96px, 132px) minmax(0, 1fr) minmax(40px, 56px);
+      gap: 12px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      max-width: 100%;
+      min-width: 0;
+    }
+
+    .control-row input[type="range"] {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .control-row-value {
+      margin: 0;
+      min-width: 0;
+      max-width: 100%;
+      justify-self: end;
+      text-align: right;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+      color: var(--white);
+    }
+
+    .control-row select {
+      width: 100%;
+      min-height: 34px;
+      border: 1px solid #3d3d3d;
+      background: #202020;
+      color: var(--white);
+      padding: 0 10px;
+      text-transform: uppercase;
+    }
+
+    .silhouette-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .silhouette-card {
+      position: relative;
+      display: grid;
+      gap: 12px;
+      padding: 14px 36px 14px 28px;
+      border: 1px solid #373737;
+      background: #202020;
+      max-width: 100%;
+      min-width: 0;
+      overflow-x: hidden;
+    }
+
+    .silhouette-card.active {
+      border-color: var(--accent);
+      box-shadow: inset 0 0 0 1px var(--accent);
+    }
+
+    .silhouette-grip {
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: grid;
+      place-items: center;
+      width: 20px;
+      height: 100%;
+      border: 0;
+      border-right: 1px solid #373737;
+      background: transparent;
+      color: var(--muted);
+      cursor: grab;
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .silhouette-delete {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 22px;
+      height: 22px;
+      border: 1px solid #3d3d3d;
+      background: #151515;
+      color: var(--white);
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .silhouette-card-title {
+      margin: 0;
+      color: var(--white);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .add-silhouette {
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 0 16px;
+      border: 1px solid #00205b;
+      background: #00205b;
+      color: #f5f5f5;
+      cursor: pointer;
+      text-transform: uppercase;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+
+    .add-silhouette:hover {
+      background: #001845;
+      border-color: #001845;
+      color: #fff;
+    }
+
+    .add-silhouette-icon {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .swatch-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .swatch-divider {
+      width: 1px;
+      height: 28px;
+      background: #3d3d3d;
+    }
+
+    .scissor-square {
+      width: 34px;
+      height: 34px;
+      min-height: 34px;
+      min-width: 34px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+    }
+
+    .toggle-line,
+    .button-group,
+    .swatches {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .toggle-line {
+      justify-content: center;
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .toggle-button.active,
+    .preset.active {
+      background: var(--accent);
+      color: #111;
+      border-color: var(--accent);
+    }
+
+    .swatch {
+      width: 34px;
+      height: 34px;
+      min-height: 34px;
+      padding: 0;
+    }
+
+    .swatch.active {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    .swatch.swatch-light {
+      border-color: #888;
+    }
+
+    .scissor-square .saw-icon {
+      display: block;
+      width: 20px;
+      height: auto;
+      flex-shrink: 0;
+    }
+
+    .effects-grid {
+      display: grid;
+      grid-template-columns: 1fr 330px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .canvas-preview {
+      max-width: 100%;
+      max-height: 520px;
+      background: transparent;
+    }
+
+    .effects-controls {
+      display: grid;
+      gap: 14px;
+      border: 1px solid var(--border);
+      background: var(--field);
+      padding: 14px;
+    }
+
+    .control-section {
+      display: grid;
+      gap: 10px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .control-section h3 {
+      margin: 0;
+      color: var(--accent);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .compact-row {
+      display: grid;
+      grid-template-columns: 90px 1fr 38px;
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .bottombar {
+      justify-content: flex-end;
+    }
+
+    /* Full-screen rebuild */
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      min-width: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      background: #1a1a1a;
+    }
+
+    body::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 100vw;
+      height: 100vh;
+      min-height: 0;
+      overflow-x: hidden;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: 0;
+      margin: 0;
+      padding: 0;
+      background: #1a1a1a;
+      color: #f5f5f5;
+    }
+
+    .topbar {
+      min-height: 0;
+      border: 0;
+      background: transparent;
+      padding: 12px 24px;
+      gap: 16px 22px;
+    }
+
+    .title {
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .stage-meta {
+      gap: 20px;
+      font-size: 11px;
+    }
+
+    .workspace {
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      border: 0;
+      background: radial-gradient(circle, #333 1px, transparent 1px);
+      background-size: 24px 24px;
+      background-color: #1a1a1a;
+      padding: 24px;
+    }
+
+    .workspace::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+
+    .bottombar {
+      min-height: 0;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      border: 0;
+      background: transparent;
+      padding: 14px 24px;
+    }
+
+    .stage {
+      min-height: 100%;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .stage-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 20px;
+      max-width: 1320px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .stage-title {
+      margin: 0;
+    }
+
+    .stage-help {
+      max-width: 560px;
+      margin: 0;
+      text-align: right;
+    }
+
+    .stage-body,
+    .stage-grid,
+    .stage-panel {
+      max-width: 1320px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .stage-panel {
+      min-height: 100%;
+      display: grid;
+      place-items: center;
+      border: 1px solid #373737;
+      background: #222;
+      padding: 22px;
+    }
+
+    .upload-layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 1fr) minmax(280px, 420px);
+      gap: 18px;
+      align-items: stretch;
+      min-height: min(680px, calc(100vh - 220px));
+    }
+
+    .upload-zone {
+      min-height: 360px;
+      border: 1px dashed #666;
+      background: #2a2a2a;
+      padding: 32px;
+    }
+
+    .upload-zone strong {
+      font-size: clamp(20px, 3vw, 42px);
+      letter-spacing: 0.06em;
+    }
+
+    .upload-card {
+      display: grid;
+      align-content: center;
+      gap: 18px;
+      border: 1px solid #373737;
+      background: #222;
+      padding: 28px;
+    }
+
+    .upload-card h3 {
+      margin: 0;
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .file-meta {
+      margin: 0;
+      padding-top: 14px;
+      border-top: 1px solid #373737;
+      text-align: left;
+    }
+
+    .upload-card .upload-cta {
+      width: 100%;
+      margin-top: 0;
+    }
+
+    .stage-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+      gap: 18px;
+      align-items: start;
+      justify-content: center;
+      max-width: 1320px;
+      min-width: 0;
+      overflow-x: hidden;
+    }
+
+    .stage-grid.wide-preview {
+      grid-template-columns: minmax(0, 860px) minmax(340px, 430px);
+    }
+
+    .stage-grid.wide-preview > .controls {
+      margin-top: 54px;
+    }
+
+    .crop-frame {
+      max-width: min(100%, 900px);
+      max-height: calc(100vh - 240px);
+    }
+
+    .crop-frame img,
+    .preview-img,
+    .cutout-preview,
+    .canvas-preview {
+      max-width: 100%;
+      max-height: calc(100vh - 270px);
+    }
+
+    .split,
+    .effects-grid {
+      max-width: 1320px;
+      width: 100%;
+      min-height: min(680px, calc(100vh - 220px));
+      margin: 0 auto;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .panel {
+      min-height: 0;
+      background: #222;
+    }
+
+    .controls,
+    .effects-controls {
+      width: 100%;
+      height: fit-content;
+      max-height: calc(100vh - 230px);
+      margin: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      background: #222;
+    }
+
+    .controls::-webkit-scrollbar,
+    .effects-controls::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+
+    #shape-controls {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    #shape-controls[hidden] {
+      display: none;
+    }
+
+    .silhouette-preview {
+      position: relative;
+      min-height: min(620px, calc(100vh - 240px));
+      width: 100%;
+      border: 1px solid #373737;
+      background-color: #202020;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    .canvas-svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      max-height: calc(100vh - 240px);
+      background-color: #202020;
+      background-image: linear-gradient(45deg, #2d2d2d 25%, transparent 25%),
+        linear-gradient(-45deg, #2d2d2d 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #2d2d2d 75%),
+        linear-gradient(-45deg, transparent 75%, #2d2d2d 75%);
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+      background-size: 20px 20px;
+      touch-action: none;
+    }
+
+    .canvas-svg .layer-image,
+    .canvas-svg .layer-path {
+      cursor: move;
+    }
+
+    .canvas-svg .selection-rect {
+      fill: none;
+      stroke: #f0f0f0;
+      stroke-width: 2;
+      stroke-dasharray: 8 4;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+
+    .canvas-svg .selection-handle {
+      fill: #f0f0f0;
+      stroke: #111;
+      stroke-width: 1;
+      vector-effect: non-scaling-stroke;
+      cursor: nwse-resize;
+    }
+
+    .canvas-svg.selecting .layer-image,
+    .canvas-svg.selecting .layer-path {
+      cursor: grabbing;
+    }
+
+    .canvas-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      min-height: 42px;
+    }
+
+    .toolbar-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .layer-focus,
+    .tool-button {
+      border: 1px solid #3d3d3d;
+      background: #202020;
+      color: #f3f3f3;
+      padding: 10px 14px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .layer-focus.active,
+    .tool-button.active {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #101010;
+    }
+
+    .tool-button[disabled] {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .canvas-svg .layer-dimmed {
+      opacity: 0.4;
+    }
+
+    .canvas-svg .layer-locked {
+      pointer-events: none;
+    }
+
+    .canvas-svg .scissor-line {
+      fill: none;
+      stroke-width: 2;
+      stroke-dasharray: 8 5;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+      animation: marching-ants 0.55s linear infinite;
+    }
+
+    .canvas-svg .scissor-line-black {
+      stroke: #050505;
+    }
+
+    .canvas-svg .scissor-line-red {
+      stroke: #ff1f1f;
+      stroke-dashoffset: 8;
+    }
+
+    .canvas-svg .scissor-point {
+      fill: #ff1f1f;
+      stroke: #050505;
+      stroke-width: 2;
+      vector-effect: non-scaling-stroke;
+      cursor: pointer;
+    }
+
+    .canvas-svg .scissor-selection {
+      fill: rgba(255, 31, 31, 0.18);
+      stroke: #050505;
+      stroke-width: 2;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+
+    .scissor-popover {
+      position: absolute;
+      z-index: 4;
+      display: flex;
+      gap: 8px;
+      padding: 8px;
+      background: #121212;
+      border: 1px solid #3d3d3d;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+    }
+
+    .mask-refinement-panel {
+      display: grid;
+      gap: 14px;
+      justify-items: center;
+    }
+
+    .mask-toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .mask-canvas-wrap {
+      position: relative;
+      display: grid;
+      max-width: 100%;
+      cursor: crosshair;
+    }
+
+    .mask-canvas-wrap canvas {
+      grid-area: 1 / 1;
+      display: block;
+      max-width: 100%;
+      max-height: calc(100vh - 360px);
+      pointer-events: none;
+    }
+
+    .mask-canvas-wrap.is-idle {
+      cursor: default;
+    }
+
+    @keyframes marching-ants {
+      to {
+        stroke-dashoffset: -13;
+      }
+    }
+
+    .primary,
+    .secondary,
+    .preset,
+    .toggle-button,
+    .swatch,
+    .upload-cta {
+      border-radius: 0;
+    }
+
+    .primary,
+    .upload-cta {
+      min-width: 170px;
+    }
+
+    .local-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 980px) {
+      body {
+        overflow-x: hidden;
+        overflow-y: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+
+      body::-webkit-scrollbar {
+        display: none;
+        width: 0;
+        height: 0;
+      }
+
+      .app {
+        min-height: 100vh;
+        height: auto;
+        grid-template-rows: auto 1fr auto;
+      }
+
+      .topbar,
+      .bottombar {
+        padding: 16px;
+        justify-content: center;
+      }
+
+      .topbar {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 12px;
+      }
+
+      .stage-meta {
+        display: grid;
+        justify-items: center;
+        gap: 10px;
+        width: 100%;
+        max-width: 320px;
+      }
+
+      .stage-meta #stage-label {
+        grid-row: 1;
+      }
+
+      .stage-meta #stage-dots {
+        grid-row: 2;
+      }
+
+      .stage-meta .poster-link {
+        grid-row: 3;
+      }
+
+      .stage-meta .dots {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .stage-meta .dot {
+        width: 28px;
+        height: 4px;
+        border-radius: 2px;
+      }
+
+      .stage-heading {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .stage-help {
+        text-align: left;
+      }
+
+      .workspace {
+        padding: 16px;
+      }
+
+      .upload-layout,
+      .stage-grid,
+      .stage-grid.wide-preview,
+      .split,
+      .effects-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stage-grid.wide-preview > .controls {
+        margin-top: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <h1 class="title">Cutout Studio</h1>
+      <div class="stage-meta">
+        <a class="poster-link" href="index.html">Back to Poster Tool</a>
+        <span id="stage-label">Stage 1 of 5</span>
+        <div class="dots" id="stage-dots" aria-label="Stage progress"></div>
+      </div>
+    </header>
+
+    <section class="workspace" id="workspace" aria-live="polite"></section>
+
+    <footer class="bottombar" id="bottombar"></footer>
+  </main>
+
+  <script type="module">
+    const HERO_CUTOUT_HANDOFF_KEY = 'since67:heroCutoutResult';
+    const workspace = document.getElementById('workspace');
+    const bottombar = document.getElementById('bottombar');
+    const stageLabel = document.getElementById('stage-label');
+    const stageDots = document.getElementById('stage-dots');
+
+    const stageNames = ['Upload', 'Crop selection', 'Background removal', 'Silhouette shape', 'Grain', 'Threshold'];
+    const presets = {
+      clean: { grainEnabled: false, grainAmount: 12, grainSize: 1, grainBlend: 25, thresholdEnabled: false, thresholdLevel: 128, thresholdSoftness: 8, contrast: 10, brightness: 0 },
+      poster: { grainEnabled: true, grainAmount: 32, grainSize: 1, grainBlend: 55, thresholdEnabled: true, thresholdLevel: 100, thresholdSoftness: 40, contrast: 20, brightness: 0 },
+      raw: { grainEnabled: true, grainAmount: 55, grainSize: 2, grainBlend: 70, thresholdEnabled: true, thresholdLevel: 150, thresholdSoftness: 4, contrast: 55, brightness: -8 }
+    };
+    const MAX_SILHOUETTES = 3;
+    const SILHOUETTE_SWATCH_COLORS = ['#ffffff', '#00205B'];
+    const SAW_TOOL_ICON = '<svg class="saw-icon" width="20" height="23" viewBox="0 0 78 88" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M68.6176 0.638267L25.4376 43.8183L34.6485 53.0292C35.6017 53.9823 36.0782 55.244 35.9883 56.5878L34.8477 73.9078L37.1797 76.2398C37.6094 76.6695 38.2578 76.7476 38.7774 76.4351C39.297 76.1187 39.5274 75.5093 39.3477 74.9312L37.7579 69.8374L45.5704 67.7436L43.4766 59.9311L51.2891 57.8373L49.1953 50.0248L57.0078 47.931L54.914 40.1185L62.7265 38.0247L60.6327 30.2122L68.4452 28.1184L66.3514 20.3059L74.1639 18.2121L72.0701 10.3996L76.1053 9.31758C76.8905 9.10664 77.453 8.53242 77.6522 7.74728C77.8514 6.96214 77.621 6.18478 77.0311 5.63008L71.6483 0.575377C70.789 -0.213683 69.4496 -0.189853 68.6176 0.638267ZM0.594627 64.8453L20.2706 45.1693C21.0636 44.3763 22.3604 44.3763 23.1573 45.1693L32.8331 54.8451C33.2628 55.2748 33.4659 55.8138 33.4269 56.4232L32.0167 77.8292C31.9815 78.3448 31.7862 78.7745 31.4229 79.1378L23.1534 87.4073C22.3605 88.2002 21.0636 88.2002 20.2667 87.4073L0.594728 67.7273C-0.198242 66.9343 -0.198343 65.6383 0.594627 64.8453ZM9.99693 65.5757L13.6375 61.9351C14.4305 61.1422 15.7273 61.1422 16.5242 61.9351L26.0672 71.4781C26.8602 72.2711 26.8602 73.5719 26.0672 74.3648L22.4266 78.0054C21.6337 78.7984 20.3328 78.7984 19.5399 78.0054L9.99693 68.4624C9.20396 67.6695 9.20396 66.3686 9.99693 65.5757Z"/></svg>';
+    let silhouetteIdCounter = 0;
+
+    function normalizeSilhouettePalette(silhouette) {
+      const raw = (silhouette.color || '').trim().toLowerCase();
+      const allowed = new Set(['#ffffff', '#00205b']);
+      if (allowed.has(raw)) {
+        silhouette.color = raw === '#00205b' ? '#00205B' : '#ffffff';
+        return;
+      }
+      if (raw === '#111111' || raw === '#111' || raw === '#000000' || raw === '#000') {
+        silhouette.color = '#00205B';
+        return;
+      }
+      silhouette.color = '#ffffff';
+    }
+
+    function formatShapeDisplay(prop, raw) {
+      const n = Number(raw);
+      if (!Number.isFinite(n)) {
+        const s = String(raw);
+        return s.length > 10 ? `${s.slice(0, 10)}…` : s;
+      }
+      if (prop === 'offsetX' || prop === 'offsetY') {
+        const s = n.toFixed(2);
+        return s.length > 10 ? `${s.slice(0, 10)}…` : s;
+      }
+      return String(Math.round(n));
+    }
+
+    function roundSilhouetteOffset(value) {
+      return Math.round(Number(value) * 100) / 100;
+    }
+
+    function syncShapeRangeUiForSilhouette(silhouetteId) {
+      const silhouette = silhouetteById(silhouetteId);
+      if (!silhouette) return;
+      document.querySelectorAll(`input[data-silhouette="${silhouetteId}"][data-shape-range]`).forEach((range) => {
+        const prop = range.dataset.shapeRange;
+        const val = silhouette[prop];
+        if (prop === 'scale') {
+          range.value = String(Math.round(val));
+        } else if (prop === 'angularity') {
+          range.value = String(Math.round(val));
+        } else if (prop === 'offsetX' || prop === 'offsetY') {
+          range.value = String(roundSilhouetteOffset(val));
+        } else {
+          range.value = String(val);
+        }
+        const span = range.nextElementSibling;
+        if (span && span.classList.contains('control-row-value')) {
+          span.textContent = formatShapeDisplay(prop, silhouette[prop]);
+        }
+      });
+    }
+
+    function createSilhouette(overrides = {}) {
+      silhouetteIdCounter += 1;
+      return {
+        id: `silhouette-${silhouetteIdCounter}`,
+        enabled: true,
+        color: '#ffffff',
+        angularity: 10,
+        offsetX: 14,
+        offsetY: 14,
+        scale: 105,
+        cutouts: [],
+        scissor: { active: false, points: [], closed: false, popover: null },
+        ...overrides
+      };
+    }
+
+    const state = {
+      stage: 1,
+      sourceFile: null,
+      sourceUrl: '',
+      sourceImage: null,
+      sourceWidth: 0,
+      sourceHeight: 0,
+      crop: null,
+      croppedBlob: null,
+      croppedUrl: '',
+      cutoutBlob: null,
+      cutoutUrl: '',
+      cutoutImage: null,
+      maskSourceImage: null,
+      maskOverlayCanvas: null,
+      maskMode: 'add',
+      contour: [],
+      silhouettes: [createSilhouette()],
+      activeSilhouetteId: 'silhouette-1',
+      imageTransform: { x: 0, y: 0, scale: 100 },
+      selectedObject: null,
+      focusLayer: 'image',
+      stage4Canvas: null,
+      stage4SilhouetteCanvas: null,
+      stage4ImageCanvas: null,
+      effectsCanvas: null,
+      effects: { ...presets.poster },
+      effectsPipeline: { applyGrain: true, applyThreshold: true }
+    };
+    let removeBackgroundFn = null;
+    let silhouetteKeyboardController = null;
+
+    function setStage(stage) {
+      state.stage = stage;
+      render();
+    }
+
+    function renderShell() {
+      stageLabel.textContent = `Stage ${state.stage} of ${stageNames.length}`;
+      stageDots.innerHTML = stageNames.map((_, index) => {
+        const dotStage = index + 1;
+        const className = dotStage < state.stage ? 'dot done' : dotStage === state.stage ? 'dot current' : 'dot';
+        return `<span class="${className}"></span>`;
+      }).join('');
+    }
+
+    function render() {
+      renderShell();
+      workspace.innerHTML = '';
+      bottombar.innerHTML = '';
+      if (state.stage !== 4 && silhouetteKeyboardController) {
+        silhouetteKeyboardController.abort();
+        silhouetteKeyboardController = null;
+      }
+
+      if (state.stage === 1) renderUpload();
+      if (state.stage === 2) renderCrop();
+      if (state.stage === 3) renderBackgroundRemoval();
+      if (state.stage === 4) renderSilhouette();
+      if (state.stage === 5) renderGrainStage();
+      if (state.stage === 6) renderThresholdStage();
+    }
+
+    function button(label, className, onClick, disabled = false) {
+      const element = document.createElement('button');
+      element.type = 'button';
+      element.className = className;
+      element.textContent = label;
+      element.disabled = disabled;
+      element.addEventListener('click', onClick);
+      return element;
+    }
+
+    function openFilePicker(input) {
+      input.value = '';
+      input.click();
+    }
+
+    let reuploadInput = null;
+
+    function getReuploadInput() {
+      if (!reuploadInput) {
+        reuploadInput = document.createElement('input');
+        reuploadInput.type = 'file';
+        reuploadInput.accept = 'image/*';
+        reuploadInput.className = 'file-input';
+        reuploadInput.addEventListener('change', () => {
+          const file = reuploadInput.files && reuploadInput.files[0];
+          if (file && file.type.startsWith('image/')) loadSourceFile(file);
+        });
+        document.body.append(reuploadInput);
+      }
+      return reuploadInput;
+    }
+
+    function promptSourceReupload() {
+      openFilePicker(getReuploadInput());
+    }
+
+    function reuploadButton() {
+      return button('Re-upload image', 'secondary', promptSourceReupload);
+    }
+
+    function clearSourceDerivatives() {
+      revokeSource();
+      state.croppedBlob = null;
+      state.cutoutBlob = null;
+      state.cutoutImage = null;
+      state.crop = null;
+      state.contour = [];
+      resetMaskRefinement();
+    }
+
+    function renderUpload() {
+      const stage = document.createElement('div');
+      stage.className = 'stage';
+      stage.innerHTML = `
+        <div class="stage-heading">
+          <h2 class="stage-title">Upload</h2>
+          <p class="stage-help">Start with the player photo you want to turn into a poster-ready cutout.</p>
+        </div>
+        <div class="stage-body upload-layout">
+          <div class="upload-zone" id="upload-zone" role="button" tabindex="0" aria-label="Upload image">
+            <input class="file-input" id="file-input" type="file" accept="image/*">
+            <img class="upload-drop-preview" src="img/cutout-preview.jpg" alt="" width="1024" height="878" decoding="async">
+            <span class="upload-copy">
+              <strong>Drop image here</strong>
+              <span>Drag an image into this area. Once uploaded, you can crop the image before background removal. Just drag over the image to keep just the subject area.</span>
+            </span>
+          </div>
+          <aside class="upload-card">
+            <h3>Cutout source</h3>
+            <p class="muted">Use a clear player image with the full subject visible. The next step lets you crop before background removal.</p>
+            <div class="file-meta" id="file-meta">${state.sourceFile ? `${state.sourceFile.name} · ${state.sourceWidth} × ${state.sourceHeight}px` : 'No image selected yet.'}</div>
+            <button class="upload-cta${state.sourceFile ? ' secondary' : ''}" type="button" id="upload-card-pick">${state.sourceFile ? 'Re-upload image' : 'Choose image'}</button>
+          </aside>
+        </div>
+      `;
+      workspace.append(stage);
+
+      const zone = document.getElementById('upload-zone');
+      const input = document.getElementById('file-input');
+      document.getElementById('upload-card-pick').addEventListener('click', () => openFilePicker(input));
+      zone.addEventListener('click', (event) => {
+        if (event.target === input) {
+          return;
+        }
+        openFilePicker(input);
+      });
+      zone.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openFilePicker(input);
+        }
+      });
+      input.addEventListener('change', () => {
+        if (input.files && input.files[0]) loadSourceFile(input.files[0]);
+      });
+
+      zone.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        zone.classList.add('dragging');
+      });
+
+      zone.addEventListener('dragleave', () => zone.classList.remove('dragging'));
+      zone.addEventListener('drop', (event) => {
+        event.preventDefault();
+        zone.classList.remove('dragging');
+        const file = event.dataTransfer.files && event.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) loadSourceFile(file);
+      });
+
+    }
+
+    async function loadSourceFile(file) {
+      clearSourceDerivatives();
+      state.sourceFile = file;
+      state.sourceUrl = URL.createObjectURL(file);
+      state.sourceImage = await loadImage(state.sourceUrl);
+      state.sourceWidth = state.sourceImage.naturalWidth;
+      state.sourceHeight = state.sourceImage.naturalHeight;
+      setStage(2);
+    }
+
+    function renderCrop() {
+      const stage = document.createElement('div');
+      stage.className = 'stage image-stage';
+      stage.innerHTML = `
+        <div class="stage-heading">
+          <h2 class="stage-title">Crop selection</h2>
+          <p class="stage-help">Drag over the image to keep just the player area. You can redraw before clipping.</p>
+        </div>
+        <div class="stage-panel">
+          <div class="crop-frame" id="crop-frame">
+            <img id="crop-image" src="${state.sourceUrl}" alt="Uploaded image">
+            <canvas class="crop-canvas" id="crop-canvas"></canvas>
+          </div>
+        </div>
+      `;
+      workspace.append(stage);
+
+      const frame = document.getElementById('crop-frame');
+      const image = document.getElementById('crop-image');
+      const canvas = document.getElementById('crop-canvas');
+      const clearButton = button('Clear selection — try again', 'secondary', () => {
+        state.crop = null;
+        cropUi.draft = null;
+        clipButton.disabled = true;
+        drawCrop(cropUi);
+      });
+      const clipButton = button('Clip to this area', 'primary', cropToBlob, !state.crop);
+      const cropUi = { frame, image, canvas, clipButton, dragging: false, start: null, draft: null };
+      bottombar.append(clearButton, reuploadButton(), clipButton);
+
+      image.addEventListener('load', () => syncCropCanvas(cropUi));
+      syncCropCanvas(cropUi);
+      drawCrop(cropUi);
+
+      frame.addEventListener('pointerdown', (event) => beginCrop(event, cropUi));
+      frame.addEventListener('pointermove', (event) => moveCrop(event, cropUi));
+      frame.addEventListener('pointerup', (event) => endCrop(event, cropUi));
+      frame.addEventListener('pointercancel', (event) => endCrop(event, cropUi));
+    }
+
+    function syncCropCanvas(cropUi) {
+      const rect = cropUi.image.getBoundingClientRect();
+      cropUi.canvas.width = Math.round(rect.width);
+      cropUi.canvas.height = Math.round(rect.height);
+    }
+
+    function pointerPoint(event, cropUi) {
+      const rect = cropUi.image.getBoundingClientRect();
+      return {
+        x: Math.max(0, Math.min(rect.width, event.clientX - rect.left)),
+        y: Math.max(0, Math.min(rect.height, event.clientY - rect.top))
+      };
+    }
+
+    function normalizeRect(start, end) {
+      const x = Math.min(start.x, end.x);
+      const y = Math.min(start.y, end.y);
+      return {
+        x,
+        y,
+        width: Math.abs(end.x - start.x),
+        height: Math.abs(end.y - start.y)
+      };
+    }
+
+    function beginCrop(event, cropUi) {
+      event.preventDefault();
+      cropUi.frame.setPointerCapture(event.pointerId);
+      cropUi.dragging = true;
+      cropUi.start = pointerPoint(event, cropUi);
+      cropUi.draft = null;
+    }
+
+    function moveCrop(event, cropUi) {
+      if (!cropUi.dragging) return;
+      cropUi.draft = normalizeRect(cropUi.start, pointerPoint(event, cropUi));
+      drawCrop(cropUi);
+    }
+
+    function endCrop(event, cropUi) {
+      if (!cropUi.dragging) return;
+      cropUi.dragging = false;
+      const rect = cropUi.draft || normalizeRect(cropUi.start, pointerPoint(event, cropUi));
+
+      if (rect.width > 10 && rect.height > 10) {
+        state.crop = rect;
+        cropUi.clipButton.disabled = false;
+      }
+
+      cropUi.draft = null;
+      drawCrop(cropUi);
+    }
+
+    function drawCrop(cropUi) {
+      syncCropCanvas(cropUi);
+      const ctx = cropUi.canvas.getContext('2d', { willReadFrequently: true });
+      const rect = cropUi.draft || state.crop;
+      ctx.clearRect(0, 0, cropUi.canvas.width, cropUi.canvas.height);
+
+      if (!rect) return;
+
+      const scaleX = state.sourceWidth / cropUi.canvas.width;
+      const scaleY = state.sourceHeight / cropUi.canvas.height;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fillRect(0, 0, cropUi.canvas.width, cropUi.canvas.height);
+      ctx.clearRect(rect.x, rect.y, rect.width, rect.height);
+      ctx.setLineDash([8, 5]);
+      ctx.lineDashOffset = -Date.now() / 80;
+      ctx.strokeStyle = '#E5FF00';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#E5FF00';
+      ctx.font = '700 12px Inter';
+      ctx.fillText(`${Math.round(rect.width * scaleX)} × ${Math.round(rect.height * scaleY)} px`, rect.x + 8, Math.max(18, rect.y - 8));
+    }
+
+    async function cropToBlob() {
+      if (!state.crop) return;
+
+      const imageRect = document.getElementById('crop-image').getBoundingClientRect();
+      const scaleX = state.sourceWidth / imageRect.width;
+      const scaleY = state.sourceHeight / imageRect.height;
+      const sx = Math.round(state.crop.x * scaleX);
+      const sy = Math.round(state.crop.y * scaleY);
+      const sw = Math.round(state.crop.width * scaleX);
+      const sh = Math.round(state.crop.height * scaleY);
+      const canvas = document.createElement('canvas');
+      canvas.width = sw;
+      canvas.height = sh;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(state.sourceImage, sx, sy, sw, sh, 0, 0, sw, sh);
+      state.croppedBlob = await canvasToBlob(canvas);
+      revokeUrl('croppedUrl');
+      revokeUrl('cutoutUrl');
+      state.croppedUrl = URL.createObjectURL(state.croppedBlob);
+      state.cutoutBlob = null;
+      state.cutoutImage = null;
+      state.contour = [];
+      resetMaskRefinement();
+      setStage(3);
+    }
+
+    function renderBackgroundRemoval() {
+      const stage = document.createElement('div');
+      stage.className = 'stage';
+      stage.innerHTML = `
+        <div class="stage-heading">
+          <h2 class="stage-title">Background removal</h2>
+          <p class="stage-help">The model runs in your browser. First run can take a little longer while assets download. You can refine the mask before confirming.</p>
+        </div>
+        <div class="split">
+          <div class="panel">
+            <div class="panel-label">Cropped source</div>
+            <img class="preview-img" src="${state.croppedUrl}" alt="Cropped source">
+          </div>
+          <div class="panel checker" id="bg-result-panel">
+            <div class="panel-label">Mask detection</div>
+            <div class="loader" id="bg-loader">
+              <div class="loader-gif-wrap" aria-hidden="true">
+                <img class="loader-gif" src="img/wol-final.gif" alt="" width="360" height="407" decoding="async" fetchpriority="high">
+              </div>
+              <div>
+                <strong>Removing background...</strong>
+                <p class="muted">Detecting subject and removing background...</p>
+                <p class="muted">Processing happens in your browser — no data is uploaded.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      workspace.append(stage);
+      bottombar.append(button('Back', 'secondary', () => setStage(2)), reuploadButton());
+      runBackgroundRemoval();
+    }
+
+    async function runBackgroundRemoval() {
+      const inputBlob = state.croppedBlob;
+      const inputUrl = state.croppedUrl;
+      if (state.maskOverlayCanvas && state.maskSourceImage) {
+        showMaskRefinement();
+        return;
+      }
+
+      try {
+        const removeBackground = await loadBackgroundRemoval();
+        const modelResultBlob = await removeBackground(inputBlob);
+        if (state.stage !== 3 || state.croppedBlob !== inputBlob || state.croppedUrl !== inputUrl) return;
+        const modelResultUrl = URL.createObjectURL(modelResultBlob);
+        const modelResultImage = await loadImage(modelResultUrl);
+        if (state.stage !== 3 || state.croppedBlob !== inputBlob || state.croppedUrl !== inputUrl) {
+          URL.revokeObjectURL(modelResultUrl);
+          return;
+        }
+        await prepareMaskRefinement(modelResultImage, inputUrl);
+        URL.revokeObjectURL(modelResultUrl);
+        if (state.stage !== 3 || state.croppedBlob !== inputBlob || state.croppedUrl !== inputUrl) {
+          resetMaskRefinement();
+          return;
+        }
+        showMaskRefinement();
+      } catch (error) {
+        if (state.stage !== 3 || state.croppedBlob !== inputBlob || state.croppedUrl !== inputUrl) return;
+        const panel = document.getElementById('bg-result-panel');
+        panel.innerHTML = `
+          <div class="panel-label">Mask detection</div>
+          <div class="loader">
+            <strong>Background removal failed</strong>
+            <p class="muted">${error && error.message ? error.message : 'Please start over and try another image.'}</p>
+          </div>
+        `;
+        bottombar.innerHTML = '';
+        bottombar.append(
+          button('Back', 'secondary', () => setStage(2)),
+          reuploadButton(),
+          button('Start over', 'secondary', resetAll)
+        );
+      }
+    }
+
+    async function loadBackgroundRemoval() {
+      if (removeBackgroundFn) return removeBackgroundFn;
+      const module = await import('https://esm.sh/@imgly/background-removal@1.4.5?bundle');
+      removeBackgroundFn = module.removeBackground;
+      return removeBackgroundFn;
+    }
+
+    async function prepareMaskRefinement(modelResultImage, sourceUrl) {
+      state.maskSourceImage = await loadImage(sourceUrl);
+      const width = modelResultImage.naturalWidth;
+      const height = modelResultImage.naturalHeight;
+      const modelCanvas = document.createElement('canvas');
+      modelCanvas.width = width;
+      modelCanvas.height = height;
+      const modelCtx = modelCanvas.getContext('2d', { willReadFrequently: true });
+      modelCtx.drawImage(modelResultImage, 0, 0, width, height);
+      const modelData = modelCtx.getImageData(0, 0, width, height).data;
+
+      const overlayCanvas = document.createElement('canvas');
+      overlayCanvas.width = width;
+      overlayCanvas.height = height;
+      const overlayCtx = overlayCanvas.getContext('2d', { willReadFrequently: true });
+      const overlayImage = overlayCtx.createImageData(width, height);
+
+      for (let i = 0; i < modelData.length; i += 4) {
+        const removal = 255 - modelData[i + 3];
+        overlayImage.data[i] = 255;
+        overlayImage.data[i + 1] = 0;
+        overlayImage.data[i + 2] = 0;
+        overlayImage.data[i + 3] = Math.round(removal * 0.9);
+      }
+
+      overlayCtx.putImageData(overlayImage, 0, 0);
+      state.maskOverlayCanvas = overlayCanvas;
+    }
+
+    function showMaskRefinement() {
+      workspace.innerHTML = `
+        <div class="stage">
+          <div class="stage-heading">
+            <h2 class="stage-title">Refine mask</h2>
+            <p class="stage-help">Red areas will be removed. Clear areas stay in the player cutout.</p>
+          </div>
+          <div class="stage-panel mask-refinement-panel">
+            <div class="mask-toolbar" aria-label="Mask refinement tools">
+              <button class="tool-button mask-tool ${state.maskMode === 'add' ? 'active' : ''}" data-mask-mode="add" type="button">Add to subject</button>
+              <button class="tool-button mask-tool ${state.maskMode === 'remove' ? 'active' : ''}" data-mask-mode="remove" type="button">Remove from subject</button>
+            </div>
+            <div class="mask-canvas-wrap" id="mask-canvas-wrap">
+              <canvas id="mask-source-canvas"></canvas>
+              <canvas id="mask-overlay-canvas"></canvas>
+              <canvas id="mask-selection-canvas"></canvas>
+            </div>
+            <div class="stage-actions">
+              <button class="secondary" id="redetect-mask" type="button">Re-detect</button>
+              <button class="primary" id="confirm-cutout" type="button">Confirm cutout</button>
+            </div>
+          </div>
+        </div>
+      `;
+      bottombar.innerHTML = '';
+      bottombar.append(button('Back', 'secondary', () => setStage(2)), reuploadButton());
+      initializeMaskRefinement();
+    }
+
+    function initializeMaskRefinement() {
+      const sourceCanvas = document.getElementById('mask-source-canvas');
+      const overlayCanvas = document.getElementById('mask-overlay-canvas');
+      const selectionCanvas = document.getElementById('mask-selection-canvas');
+      const wrap = document.getElementById('mask-canvas-wrap');
+      const width = state.maskOverlayCanvas.width;
+      const height = state.maskOverlayCanvas.height;
+      [sourceCanvas, overlayCanvas, selectionCanvas].forEach((canvas) => {
+        canvas.width = width;
+        canvas.height = height;
+      });
+
+      sourceCanvas.getContext('2d', { willReadFrequently: true }).drawImage(state.maskSourceImage, 0, 0, width, height);
+      syncMaskOverlayCanvas();
+
+      document.querySelectorAll('[data-mask-mode]').forEach((modeButton) => {
+        modeButton.addEventListener('click', () => {
+          state.maskMode = modeButton.dataset.maskMode;
+          document.querySelectorAll('[data-mask-mode]').forEach((buttonEl) => {
+            buttonEl.classList.toggle('active', buttonEl === modeButton);
+          });
+        });
+      });
+
+      let lasso = null;
+      let animationFrame = null;
+      const startLasso = (event) => {
+        event.preventDefault();
+        const point = maskPoint(event);
+        lasso = { points: [point], dashOffset: 0 };
+        drawMaskSelection(lasso);
+        animateMaskSelection();
+        window.addEventListener('mousemove', moveLasso);
+        window.addEventListener('mouseup', endLasso);
+      };
+      const moveLasso = (event) => {
+        if (!lasso) return;
+        event.preventDefault();
+        lasso.points.push(maskPoint(event));
+      };
+      const endLasso = (event) => {
+        if (!lasso) return;
+        event.preventDefault();
+        lasso.points.push(maskPoint(event));
+        const selection = lasso;
+        lasso = null;
+        if (animationFrame) {
+          cancelAnimationFrame(animationFrame);
+          animationFrame = null;
+        }
+        window.removeEventListener('mousemove', moveLasso);
+        window.removeEventListener('mouseup', endLasso);
+        applyMaskLasso(selection.points);
+        flashMaskSelection(selection.points);
+      };
+      const cancelLasso = () => {
+        lasso = null;
+        if (animationFrame) {
+          cancelAnimationFrame(animationFrame);
+          animationFrame = null;
+        }
+        window.removeEventListener('mousemove', moveLasso);
+        window.removeEventListener('mouseup', endLasso);
+        clearMaskSelection();
+      };
+      const touchFromEvent = (event, changed = false) => {
+        const touchList = changed ? event.changedTouches : event.touches;
+        const touch = touchList && touchList[0];
+        return touch ? { clientX: touch.clientX, clientY: touch.clientY, preventDefault: () => event.preventDefault() } : event;
+      };
+
+      function animateMaskSelection() {
+        if (!lasso) return;
+        lasso.dashOffset -= 1;
+        drawMaskSelection(lasso);
+        animationFrame = requestAnimationFrame(animateMaskSelection);
+      }
+
+      wrap.addEventListener('mousedown', startLasso);
+      wrap.addEventListener('mouseleave', () => {
+        if (!lasso) clearMaskSelection();
+      });
+      wrap.addEventListener('touchstart', (event) => startLasso(touchFromEvent(event)), { passive: false });
+      wrap.addEventListener('touchmove', (event) => moveLasso(touchFromEvent(event)), { passive: false });
+      wrap.addEventListener('touchend', (event) => endLasso(touchFromEvent(event, true)), { passive: false });
+      wrap.addEventListener('touchcancel', cancelLasso);
+
+      document.getElementById('confirm-cutout').addEventListener('click', confirmCutout);
+      document.getElementById('redetect-mask').addEventListener('click', () => {
+        resetMaskRefinement();
+        render();
+      });
+    }
+
+    function syncMaskOverlayCanvas() {
+      const overlayCanvas = document.getElementById('mask-overlay-canvas');
+      if (!overlayCanvas || !state.maskOverlayCanvas) return;
+      const ctx = overlayCanvas.getContext('2d', { willReadFrequently: true });
+      ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+      ctx.drawImage(state.maskOverlayCanvas, 0, 0);
+    }
+
+    function maskPoint(event) {
+      const canvas = document.getElementById('mask-overlay-canvas');
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: ((event.clientX - rect.left) / rect.width) * canvas.width,
+        y: ((event.clientY - rect.top) / rect.height) * canvas.height
+      };
+    }
+
+    function maskLassoPath(points) {
+      const path = new Path2D();
+      if (!points.length) return path;
+      path.moveTo(points[0].x, points[0].y);
+      points.slice(1).forEach((point) => path.lineTo(point.x, point.y));
+      path.closePath();
+      return path;
+    }
+
+    function drawMaskSelection(lasso) {
+      const selectionCanvas = document.getElementById('mask-selection-canvas');
+      if (!selectionCanvas) return;
+      const ctx = selectionCanvas.getContext('2d', { willReadFrequently: true });
+      ctx.clearRect(0, 0, selectionCanvas.width, selectionCanvas.height);
+      if (!lasso.points.length) return;
+      if (lasso.points.length >= 2) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(lasso.points[0].x, lasso.points[0].y);
+        lasso.points.slice(1).forEach((point) => ctx.lineTo(point.x, point.y));
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.9)';
+        ctx.fill();
+        ctx.restore();
+      }
+      ctx.save();
+      ctx.lineWidth = 1.5;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#ffffff';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+      ctx.shadowBlur = 3;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.setLineDash([8, 5]);
+      ctx.lineDashOffset = lasso.dashOffset;
+      ctx.beginPath();
+      ctx.moveTo(lasso.points[0].x, lasso.points[0].y);
+      lasso.points.slice(1).forEach((point) => ctx.lineTo(point.x, point.y));
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function flashMaskSelection(points) {
+      const selectionCanvas = document.getElementById('mask-selection-canvas');
+      if (!selectionCanvas) return;
+      const ctx = selectionCanvas.getContext('2d', { willReadFrequently: true });
+      const path = maskLassoPath(points);
+      ctx.save();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.fill(path);
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = '#ffffff';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+      ctx.shadowBlur = 3;
+      ctx.setLineDash([8, 5]);
+      ctx.stroke(path);
+      ctx.restore();
+      window.setTimeout(clearMaskSelection, 150);
+    }
+
+    function clearMaskSelection() {
+      const selectionCanvas = document.getElementById('mask-selection-canvas');
+      if (!selectionCanvas) return;
+      selectionCanvas.getContext('2d', { willReadFrequently: true }).clearRect(0, 0, selectionCanvas.width, selectionCanvas.height);
+    }
+
+    function applyMaskLasso(points) {
+      if (!state.maskOverlayCanvas || points.length < 3) return;
+      const path = maskLassoPath(points);
+      const ctx = state.maskOverlayCanvas.getContext('2d', { willReadFrequently: true });
+      const imageData = ctx.getImageData(0, 0, state.maskOverlayCanvas.width, state.maskOverlayCanvas.height);
+      for (let y = 0; y < state.maskOverlayCanvas.height; y += 1) {
+        for (let x = 0; x < state.maskOverlayCanvas.width; x += 1) {
+          if (!ctx.isPointInPath(path, x + 0.5, y + 0.5)) continue;
+          const index = (y * state.maskOverlayCanvas.width + x) * 4;
+          if (state.maskMode === 'add') {
+            imageData.data[index + 3] = 0;
+          } else {
+            imageData.data[index] = 255;
+            imageData.data[index + 1] = 0;
+            imageData.data[index + 2] = 0;
+            imageData.data[index + 3] = 128;
+          }
+        }
+      }
+      ctx.putImageData(imageData, 0, 0);
+      syncMaskOverlayCanvas();
+    }
+
+    async function confirmCutout() {
+      if (!state.maskSourceImage || !state.maskOverlayCanvas) return;
+      const width = state.maskOverlayCanvas.width;
+      const height = state.maskOverlayCanvas.height;
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(state.maskSourceImage, 0, 0, width, height);
+
+      const imageData = ctx.getImageData(0, 0, width, height);
+      const maskData = state.maskOverlayCanvas.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, width, height).data;
+      for (let i = 0; i < imageData.data.length; i += 4) {
+        const removalStrength = clamp(maskData[i + 3] / 128, 0, 1);
+        imageData.data[i + 3] = Math.round(imageData.data[i + 3] * (1 - removalStrength));
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+      state.cutoutBlob = await canvasToBlob(canvas);
+      bottombar.innerHTML = '';
+      revokeUrl('cutoutUrl');
+      state.cutoutUrl = URL.createObjectURL(state.cutoutBlob);
+      state.cutoutImage = await loadImage(state.cutoutUrl);
+      state.contour = [];
+      setStage(4);
+    }
+
+    function renderSilhouette() {
+      state.selectedObject = null;
+      state.focusLayer = 'image';
+      const stage = document.createElement('div');
+      stage.className = 'stage';
+      stage.innerHTML = `
+        <div class="stage-heading">
+          <h2 class="stage-title">Silhouette shape</h2>
+          <p class="stage-help">Click the image or shape to select. Drag to move, drag a corner handle to scale. Click outside to deselect.</p>
+        </div>
+        <div class="stage-grid wide-preview">
+          <div>
+            <div class="canvas-toolbar">
+              <div class="toolbar-group" aria-label="Layer focus">
+                <button class="layer-focus active" data-focus-layer="image" type="button">Edit image</button>
+                <button class="layer-focus" data-focus-layer="shape" type="button">Edit silhouette</button>
+              </div>
+            </div>
+            <div class="silhouette-preview" id="silhouette-preview"></div>
+          </div>
+          <aside class="controls" id="silhouette-controls"></aside>
+        </div>
+      `;
+      workspace.append(stage);
+
+      renderSilhouetteControls();
+      document.querySelectorAll('[data-focus-layer]').forEach((element) => {
+        element.addEventListener('click', () => {
+          setFocusLayer(element.dataset.focusLayer);
+        });
+      });
+
+      updateSilhouettePreview();
+      initializeCanvasInteractions();
+      initializeSilhouetteKeyboard();
+      bottombar.append(button('Continue to grain', 'primary', async () => {
+        state.stage4Canvas = await flattenStageFour();
+        setStage(5);
+      }));
+    }
+
+    function getActiveSilhouette() {
+      return state.silhouettes.find((silhouette) => silhouette.id === state.activeSilhouetteId) || state.silhouettes[0];
+    }
+
+    function activateSilhouette(id) {
+      if (!state.silhouettes.some((silhouette) => silhouette.id === id)) return;
+      state.activeSilhouetteId = id;
+      state.selectedObject = null;
+      renderSilhouetteControls();
+      updateSilhouettePreview();
+    }
+
+    function renderSilhouetteControls() {
+      const controls = document.getElementById('silhouette-controls');
+      if (!controls) return;
+      state.silhouettes.forEach(normalizeSilhouettePalette);
+      controls.innerHTML = `
+        <div class="silhouette-list" id="silhouette-list">
+          ${state.silhouettes.map((silhouette, index) => silhouetteCard(silhouette, index)).join('')}
+        </div>
+        ${state.silhouettes.length < MAX_SILHOUETTES ? '<button class="add-silhouette" id="add-silhouette" type="button"><span class="add-silhouette-icon" aria-hidden="true">+</span> Add silhouette</button>' : ''}
+      `;
+
+      controls.querySelectorAll('[data-silhouette-id]').forEach((card) => {
+        card.addEventListener('click', () => {
+          state.activeSilhouetteId = card.dataset.silhouetteId;
+          state.selectedObject = null;
+          renderSilhouetteControls();
+          updateSilhouettePreview();
+        });
+      });
+
+      controls.querySelectorAll('[data-color]').forEach((element) => {
+        element.addEventListener('click', (event) => {
+          event.stopPropagation();
+          const silhouette = silhouetteById(element.dataset.silhouette);
+          if (!silhouette) return;
+          state.activeSilhouetteId = silhouette.id;
+          silhouette.color = element.dataset.color;
+          renderSilhouetteControls();
+          updateSilhouettePreview();
+        });
+      });
+
+      controls.querySelectorAll('[data-shape-range]').forEach((range) => {
+        range.addEventListener('input', () => {
+          const silhouette = silhouetteById(range.dataset.silhouette);
+          if (!silhouette) return;
+          state.activeSilhouetteId = silhouette.id;
+          const prop = range.dataset.shapeRange;
+          let next = Number(range.value);
+          if (prop === 'offsetX' || prop === 'offsetY') {
+            next = roundSilhouetteOffset(next);
+          }
+          silhouette[prop] = next;
+          const span = range.nextElementSibling;
+          if (span && span.classList.contains('control-row-value')) {
+            span.textContent = formatShapeDisplay(prop, silhouette[prop]);
+          }
+          highlightActiveSilhouetteCard();
+          updateSilhouettePreview();
+        });
+      });
+
+      controls.querySelectorAll('[data-scissor-tool]').forEach((scissorButton) => {
+        scissorButton.addEventListener('click', (event) => {
+          event.stopPropagation();
+          const silhouette = silhouetteById(scissorButton.dataset.scissorTool);
+          if (!silhouette || !silhouette.enabled) return;
+          state.activeSilhouetteId = silhouette.id;
+          state.focusLayer = 'shape';
+          state.selectedObject = null;
+          if (silhouette.scissor.active) {
+            resetScissor(silhouette);
+          } else {
+            silhouette.scissor = { active: true, points: [], closed: false, popover: null };
+          }
+          renderSilhouetteControls();
+          syncSilhouetteToolbar();
+          updateSilhouettePreview();
+        });
+      });
+
+      controls.querySelectorAll('[data-delete-silhouette]').forEach((deleteButton) => {
+        deleteButton.addEventListener('click', (event) => {
+          event.stopPropagation();
+          deleteSilhouette(deleteButton.dataset.deleteSilhouette);
+        });
+      });
+
+      const addButton = document.getElementById('add-silhouette');
+      if (addButton) {
+        addButton.addEventListener('click', () => {
+          const silhouette = createSilhouette();
+          state.silhouettes.push(silhouette);
+          state.activeSilhouetteId = silhouette.id;
+          state.selectedObject = null;
+          renderSilhouetteControls();
+          updateSilhouettePreview();
+        });
+      }
+
+      initializeSilhouetteReorder();
+      syncSilhouetteToolbar();
+    }
+
+    function silhouetteCard(silhouette, index) {
+      const activeClass = silhouette.id === state.activeSilhouetteId ? ' active' : '';
+      const deleteButton = state.silhouettes.length > 1
+        ? `<button class="silhouette-delete" data-delete-silhouette="${silhouette.id}" type="button" aria-label="Delete silhouette">x</button>`
+        : '';
+      return `
+        <section class="silhouette-card${activeClass}" data-silhouette-id="${silhouette.id}">
+          <button class="silhouette-grip" data-drag-handle="${silhouette.id}" draggable="true" type="button" aria-label="Reorder silhouette">⋮</button>
+          ${deleteButton}
+          <h3 class="silhouette-card-title">Silhouette ${index + 1}</h3>
+          <div class="swatch-actions">
+            <div class="swatches">
+              ${SILHOUETTE_SWATCH_COLORS.map((color) => {
+                const lightClass = color === '#ffffff' ? ' swatch-light' : '';
+                return `<button class="swatch${lightClass} ${silhouette.color === color ? 'active' : ''}" data-silhouette="${silhouette.id}" data-color="${color}" type="button" style="background:${color}"></button>`;
+              }).join('')}
+            </div>
+            <span class="swatch-divider" aria-hidden="true"></span>
+            <button class="tool-button scissor-square ${silhouette.scissor.active ? 'active' : ''}" data-scissor-tool="${silhouette.id}" type="button" ${silhouette.enabled ? '' : 'disabled'} aria-label="Cut shape tool">${SAW_TOOL_ICON}</button>
+          </div>
+          ${shapeRange(silhouette, 'Angularity', 'angularity', 1, 40, silhouette.angularity)}
+          ${shapeRange(silhouette, 'Offset X', 'offsetX', -120, 120, silhouette.offsetX, '0.1')}
+          ${shapeRange(silhouette, 'Offset Y', 'offsetY', -120, 120, silhouette.offsetY, '0.1')}
+          ${shapeRange(silhouette, 'Scale', 'scale', 5, 800, silhouette.scale)}
+        </section>
+      `;
+    }
+
+    function shapeRange(silhouette, label, prop, min, max, value, step = '1') {
+      const safeVal = prop === 'offsetX' || prop === 'offsetY' ? roundSilhouetteOffset(value) : value;
+      const display = formatShapeDisplay(prop, safeVal);
+      return `
+        <label class="control-row">
+          <span>${label}</span>
+          <input data-silhouette="${silhouette.id}" data-shape-range="${prop}" type="range" min="${min}" max="${max}" step="${step}" value="${safeVal}">
+          <span class="control-row-value">${display}</span>
+        </label>
+      `;
+    }
+
+    function silhouetteById(id) {
+      return state.silhouettes.find((silhouette) => silhouette.id === id);
+    }
+
+    function highlightActiveSilhouetteCard() {
+      document.querySelectorAll('[data-silhouette-id]').forEach((card) => {
+        card.classList.toggle('active', card.dataset.silhouetteId === state.activeSilhouetteId);
+      });
+    }
+
+    function deleteSilhouette(id) {
+      if (state.silhouettes.length <= 1) return;
+      const index = state.silhouettes.findIndex((silhouette) => silhouette.id === id);
+      if (index === -1) return;
+      state.silhouettes.splice(index, 1);
+      if (state.activeSilhouetteId === id) {
+        state.activeSilhouetteId = state.silhouettes[Math.max(0, index - 1)].id;
+        state.selectedObject = null;
+      }
+      renderSilhouetteControls();
+      updateSilhouettePreview();
+    }
+
+    function initializeSilhouetteReorder() {
+      const list = document.getElementById('silhouette-list');
+      if (!list) return;
+      let draggedId = '';
+
+      list.querySelectorAll('[data-drag-handle]').forEach((handle) => {
+        handle.addEventListener('click', (event) => event.stopPropagation());
+        handle.addEventListener('dragstart', (event) => {
+          draggedId = handle.dataset.dragHandle;
+          event.dataTransfer.effectAllowed = 'move';
+          event.dataTransfer.setData('text/plain', draggedId);
+        });
+      });
+
+      list.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        const dragged = list.querySelector(`[data-silhouette-id="${draggedId}"]`);
+        const target = event.target.closest('[data-silhouette-id]');
+        if (!dragged || !target || dragged === target) return;
+        const rect = target.getBoundingClientRect();
+        const insertBefore = event.clientY < rect.top + rect.height / 2;
+        list.insertBefore(dragged, insertBefore ? target : target.nextSibling);
+        syncSilhouetteOrderFromDom();
+      });
+
+      list.addEventListener('drop', (event) => {
+        event.preventDefault();
+        draggedId = '';
+        renderSilhouetteControls();
+        updateSilhouettePreview();
+      });
+
+      list.addEventListener('dragend', () => {
+        draggedId = '';
+        renderSilhouetteControls();
+        updateSilhouettePreview();
+      });
+    }
+
+    function syncSilhouetteOrderFromDom() {
+      const ids = Array.from(document.querySelectorAll('#silhouette-list [data-silhouette-id]')).map((card) => card.dataset.silhouetteId);
+      state.silhouettes = ids.map(silhouetteById).filter(Boolean);
+      updateSilhouettePreview();
+    }
+
+    function setFocusLayer(layer) {
+      const active = getActiveSilhouette();
+      state.focusLayer = layer === 'shape' && active && active.enabled ? 'shape' : 'image';
+      state.selectedObject = null;
+      syncSilhouetteToolbar();
+      updateSilhouettePreview();
+    }
+
+    function syncSilhouetteToolbar() {
+      document.querySelectorAll('[data-focus-layer]').forEach((element) => {
+        element.classList.toggle('active', element.dataset.focusLayer === state.focusLayer);
+      });
+
+      highlightActiveSilhouetteCard();
+      document.querySelectorAll('[data-scissor-tool]').forEach((buttonEl) => {
+        const silhouette = silhouetteById(buttonEl.dataset.scissorTool);
+        const isActive = Boolean(silhouette && silhouette.id === state.activeSilhouetteId && silhouette.scissor.active && state.focusLayer === 'shape');
+        buttonEl.classList.toggle('active', isActive);
+        buttonEl.disabled = !silhouette || !silhouette.enabled;
+      });
+    }
+
+    function resetScissor(silhouette = getActiveSilhouette()) {
+      if (!silhouette) return;
+      silhouette.scissor = { active: false, points: [], closed: false, popover: null };
+    }
+
+    async function updateSilhouettePreview() {
+      if (!state.cutoutImage) {
+        state.cutoutImage = await loadImage(state.cutoutUrl);
+      }
+
+      const preview = document.getElementById('silhouette-preview');
+      if (!preview) return;
+
+      const width = state.cutoutImage.naturalWidth;
+      const height = state.cutoutImage.naturalHeight;
+      const it = state.imageTransform;
+      const imgScale = it.scale / 100;
+      const imgW = width * imgScale;
+      const imgH = height * imgScale;
+      const imageClasses = [
+        'layer-image',
+        state.focusLayer === 'shape' ? 'layer-dimmed layer-locked' : ''
+      ].filter(Boolean).join(' ');
+      const imagePointer = state.focusLayer === 'image' ? 'image' : '';
+      const active = getActiveSilhouette();
+      const shapesMarkup = [...state.silhouettes].reverse().map((silhouette) => {
+        if (!silhouette.enabled) return '';
+        const path = silhouettePath(silhouette);
+        if (!path) return '';
+        const isActive = active && silhouette.id === active.id;
+        const classes = ['layer-path', isActive ? '' : 'layer-locked'].filter(Boolean).join(' ');
+        const shapePointer = isActive && state.focusLayer === 'shape' && !silhouette.scissor.active ? 'shape' : '';
+        const maskId = `silhouette-mask-${silhouette.id}`;
+        const maskAttr = silhouette.cutouts.length ? ` mask="url(#${maskId})"` : '';
+        return `<path class="${classes}" data-silhouette-layer="${silhouette.id}" ${shapePointer ? `data-object="${shapePointer}"` : ''} d="${path}" fill="${silhouette.color}"${maskAttr}></path>`;
+      }).join('');
+      const maskMarkup = silhouetteMaskMarkup(width, height);
+      const scissorMarkup = scissorOverlayMarkup(width, height);
+      const popoverMarkup = scissorPopoverMarkup(width, height);
+
+      preview.innerHTML = `
+        <svg class="canvas-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet">
+          ${maskMarkup}
+          ${shapesMarkup}
+          <image class="${imageClasses}" ${imagePointer ? `data-object="${imagePointer}"` : ''} href="${state.cutoutUrl}" x="${it.x}" y="${it.y}" width="${imgW}" height="${imgH}" preserveAspectRatio="none"></image>
+          ${scissorMarkup}
+        </svg>
+        ${popoverMarkup}
+      `;
+
+      syncSilhouetteToolbar();
+      decorateSelection();
+      attachScissorPopoverEvents();
+    }
+
+    function silhouetteMaskMarkup(width, height) {
+      const masks = state.silhouettes.map((silhouette) => {
+        if (!silhouette.enabled || !silhouette.cutouts.length) return '';
+        const cutouts = silhouette.cutouts
+          .map((polygon) => polygonPath(silhouette, polygon))
+          .filter(Boolean)
+          .map((path) => `<path d="${path}" fill="#000"></path>`)
+          .join('');
+        if (!cutouts) return '';
+        return `
+          <mask id="silhouette-mask-${silhouette.id}" maskUnits="userSpaceOnUse" x="0" y="0" width="${width}" height="${height}">
+            <rect x="0" y="0" width="${width}" height="${height}" fill="#fff"></rect>
+            ${cutouts}
+          </mask>
+        `;
+      }).join('');
+
+      return masks ? `<defs>${masks}</defs>` : '';
+    }
+
+    function scissorOverlayMarkup(width, height) {
+      if (state.focusLayer !== 'shape') return '';
+      const scissor = getActiveSilhouette().scissor;
+      const points = scissor.points;
+      if (!scissor.active || !points.length) return '';
+
+      const pointList = points.map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(' ');
+      const closedPointList = `${pointList} ${points[0].x.toFixed(1)},${points[0].y.toFixed(1)}`;
+      const antsMarkup = (linePoints) => `
+        <polyline class="scissor-line scissor-line-black" points="${linePoints}"></polyline>
+        <polyline class="scissor-line scissor-line-red" points="${linePoints}"></polyline>
+      `;
+      const radius = Math.max(width, height) * 0.012;
+      const circles = points.map((point, index) => {
+        const firstClass = index === 0 ? ' scissor-first-point' : '';
+        return `<circle class="scissor-point${firstClass}" data-scissor-point="${index}" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="${radius.toFixed(1)}"></circle>`;
+      }).join('');
+
+      if (scissor.closed) {
+        return `
+          <polygon class="scissor-selection" points="${pointList}"></polygon>
+          ${antsMarkup(closedPointList)}
+          ${circles}
+        `;
+      }
+
+      return `
+        ${antsMarkup(pointList)}
+        ${circles}
+      `;
+    }
+
+    function scissorPopoverMarkup(width, height) {
+      if (state.focusLayer !== 'shape') return '';
+      const scissor = getActiveSilhouette().scissor;
+      if (!scissor.active || !scissor.closed || !scissor.popover) return '';
+      const left = clamp((scissor.popover.x / width) * 100, 4, 88);
+      const top = clamp((scissor.popover.y / height) * 100, 4, 88);
+      return `
+        <div class="scissor-popover" style="left:${left}%; top:${top}%;">
+          <button class="secondary" id="cancel-scissor-selection" type="button">Cancel</button>
+          <button class="primary" id="remove-scissor-selection" type="button">Remove this area</button>
+        </div>
+      `;
+    }
+
+    function attachScissorPopoverEvents() {
+      const cancel = document.getElementById('cancel-scissor-selection');
+      if (cancel) {
+        cancel.addEventListener('click', () => {
+          resetScissor();
+          syncSilhouetteToolbar();
+          updateSilhouettePreview();
+        });
+      }
+
+      const remove = document.getElementById('remove-scissor-selection');
+      if (remove) {
+        remove.addEventListener('click', () => {
+          const silhouette = getActiveSilhouette();
+          if (silhouette.scissor.points.length >= 3) {
+            silhouette.cutouts.push(silhouette.scissor.points.map((point) => ({ ...point })));
+          }
+          resetScissor(silhouette);
+          state.selectedObject = null;
+          syncSilhouetteToolbar();
+          updateSilhouettePreview();
+        });
+      }
+    }
+
+    function decorateSelection() {
+      const svg = document.querySelector('.canvas-svg');
+      if (!svg) return;
+      const previous = svg.querySelector('.selection');
+      if (previous) previous.remove();
+
+      const selection = state.selectedObject;
+      if (!selection) return;
+      const active = getActiveSilhouette();
+      if (selection === 'shape' && (!active || !active.enabled)) return;
+
+      const target = svg.querySelector(`[data-object="${selection}"]`);
+      if (!target) return;
+
+      const bbox = target.getBBox();
+      if (!bbox || bbox.width <= 0 || bbox.height <= 0) return;
+
+      const ns = 'http://www.w3.org/2000/svg';
+      const group = document.createElementNS(ns, 'g');
+      group.setAttribute('class', 'selection');
+
+      const rect = document.createElementNS(ns, 'rect');
+      rect.setAttribute('class', 'selection-rect');
+      rect.setAttribute('x', bbox.x);
+      rect.setAttribute('y', bbox.y);
+      rect.setAttribute('width', bbox.width);
+      rect.setAttribute('height', bbox.height);
+      group.appendChild(rect);
+
+      const W = state.cutoutImage.naturalWidth;
+      const H = state.cutoutImage.naturalHeight;
+      const handleRadius = Math.max(W, H) * 0.018;
+      const corners = [
+        { handle: 'nw', cx: bbox.x, cy: bbox.y },
+        { handle: 'ne', cx: bbox.x + bbox.width, cy: bbox.y },
+        { handle: 'sw', cx: bbox.x, cy: bbox.y + bbox.height },
+        { handle: 'se', cx: bbox.x + bbox.width, cy: bbox.y + bbox.height }
+      ];
+      corners.forEach((corner) => {
+        const circle = document.createElementNS(ns, 'circle');
+        circle.setAttribute('class', 'selection-handle');
+        circle.setAttribute('data-handle', corner.handle);
+        circle.setAttribute('cx', corner.cx);
+        circle.setAttribute('cy', corner.cy);
+        circle.setAttribute('r', handleRadius);
+        group.appendChild(circle);
+      });
+
+      svg.appendChild(group);
+    }
+
+    function pointerToSvg(event) {
+      const svg = document.querySelector('.canvas-svg');
+      if (!svg) return { x: 0, y: 0 };
+      const rect = svg.getBoundingClientRect();
+      const W = state.cutoutImage.naturalWidth;
+      const H = state.cutoutImage.naturalHeight;
+      const fitScale = Math.min(rect.width / W, rect.height / H);
+      const renderedW = W * fitScale;
+      const renderedH = H * fitScale;
+      const padX = (rect.width - renderedW) / 2;
+      const padY = (rect.height - renderedH) / 2;
+      const localX = event.clientX - rect.left - padX;
+      const localY = event.clientY - rect.top - padY;
+      return { x: localX / fitScale, y: localY / fitScale };
+    }
+
+    function initializeCanvasInteractions() {
+      const preview = document.getElementById('silhouette-preview');
+      preview.tabIndex = 0;
+      let gesture = null;
+
+      preview.addEventListener('pointerdown', (event) => {
+        const svg = preview.querySelector('.canvas-svg');
+        if (!svg) return;
+        preview.focus();
+
+        if (event.target.closest('.scissor-popover')) {
+          return;
+        }
+
+        if (state.focusLayer === 'shape' && getActiveSilhouette().scissor.active) {
+          handleScissorPointer(event);
+          return;
+        }
+
+        const handleEl = event.target.closest('[data-handle]');
+        if (handleEl && state.selectedObject) {
+          event.preventDefault();
+          gesture = startResize(event);
+          if (gesture) {
+            preview.setPointerCapture(event.pointerId);
+            svg.classList.add('selecting');
+          }
+          return;
+        }
+
+        const layer = event.target.closest('[data-object]');
+        if (layer) {
+          event.preventDefault();
+          const objectName = layer.dataset.object;
+          if (objectName !== state.focusLayer) return;
+          if (state.selectedObject !== objectName) {
+            state.selectedObject = objectName;
+            decorateSelection();
+          }
+          gesture = startMove(objectName, event);
+          preview.setPointerCapture(event.pointerId);
+          svg.classList.add('selecting');
+          return;
+        }
+
+        if (state.selectedObject) {
+          state.selectedObject = null;
+          decorateSelection();
+        }
+      });
+
+      preview.addEventListener('pointermove', (event) => {
+        if (!gesture) return;
+        if (gesture.kind === 'move') applyMove(gesture, event);
+        else if (gesture.kind === 'resize') applyResize(gesture, event);
+      });
+
+      function endGesture(event) {
+        if (!gesture) return;
+        gesture = null;
+        const svg = preview.querySelector('.canvas-svg');
+        if (svg) svg.classList.remove('selecting');
+        if (preview.hasPointerCapture && preview.hasPointerCapture(event.pointerId)) {
+          preview.releasePointerCapture(event.pointerId);
+        }
+      }
+
+      preview.addEventListener('pointerup', endGesture);
+      preview.addEventListener('pointercancel', endGesture);
+      preview.addEventListener('dblclick', (event) => {
+        const scissor = getActiveSilhouette().scissor;
+        if (state.focusLayer !== 'shape' || !scissor.active || scissor.closed || scissor.points.length < 3) return;
+        event.preventDefault();
+        closeScissorSelection();
+      });
+
+      preview.addEventListener('keydown', (event) => {
+        handleSilhouetteKeydown(event);
+      });
+    }
+
+    function initializeSilhouetteKeyboard() {
+      if (silhouetteKeyboardController) {
+        silhouetteKeyboardController.abort();
+      }
+      silhouetteKeyboardController = new AbortController();
+      document.addEventListener('keydown', handleSilhouetteKeydown, { signal: silhouetteKeyboardController.signal });
+    }
+
+    function handleSilhouetteKeydown(event) {
+      if (state.stage !== 4) return;
+
+      const activeScissor = getActiveSilhouette().scissor;
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z' && activeScissor.active && activeScissor.points.length) {
+        event.preventDefault();
+        event.stopPropagation();
+        activeScissor.points.pop();
+        activeScissor.closed = false;
+        activeScissor.popover = null;
+        updateSilhouettePreview();
+        return;
+      }
+
+      if (event.key === 'Escape' && activeScissor.active) {
+        event.preventDefault();
+        event.stopPropagation();
+        resetScissor();
+        syncSilhouetteToolbar();
+        updateSilhouettePreview();
+        return;
+      }
+
+      if (event.key === 'Escape' && state.selectedObject) {
+        event.stopPropagation();
+        state.selectedObject = null;
+        decorateSelection();
+      }
+    }
+
+    function handleScissorPointer(event) {
+      event.preventDefault();
+      const silhouette = getActiveSilhouette();
+      const scissor = silhouette.scissor;
+      if (state.focusLayer !== 'shape' || !silhouette.enabled || scissor.closed) {
+        return;
+      }
+
+      const point = pointerToSvg(event);
+      const points = scissor.points;
+      const closeDistance = Math.max(state.cutoutImage.naturalWidth, state.cutoutImage.naturalHeight) * 0.035;
+      const first = points[0];
+      const clickedFirstPoint = points.length >= 3 && first && Math.hypot(point.x - first.x, point.y - first.y) <= closeDistance;
+
+      if (clickedFirstPoint || (event.detail >= 2 && points.length >= 3)) {
+        closeScissorSelection();
+        return;
+      }
+
+      points.push(point);
+      scissor.popover = null;
+      updateSilhouettePreview();
+    }
+
+    function closeScissorSelection() {
+      const scissor = getActiveSilhouette().scissor;
+      const points = scissor.points;
+      if (points.length < 3) return;
+
+      scissor.closed = true;
+      scissor.popover = polygonCentroid(points);
+      updateSilhouettePreview();
+    }
+
+    function polygonCentroid(points) {
+      let x = 0;
+      let y = 0;
+      points.forEach((point) => {
+        x += point.x;
+        y += point.y;
+      });
+      return {
+        x: x / points.length,
+        y: y / points.length
+      };
+    }
+
+    function startMove(objectName, event) {
+      const startPt = pointerToSvg(event);
+      if (objectName === 'image') {
+        return {
+          kind: 'move',
+          object: 'image',
+          startPt,
+          original: { x: state.imageTransform.x, y: state.imageTransform.y }
+        };
+      }
+      return {
+        kind: 'move',
+        object: 'shape',
+        startPt,
+        silhouetteId: getActiveSilhouette().id,
+        original: { x: getActiveSilhouette().offsetX, y: getActiveSilhouette().offsetY }
+      };
+    }
+
+    function applyMove(gesture, event) {
+      const pt = pointerToSvg(event);
+      const dx = pt.x - gesture.startPt.x;
+      const dy = pt.y - gesture.startPt.y;
+      if (gesture.object === 'image') {
+        state.imageTransform.x = gesture.original.x + dx;
+        state.imageTransform.y = gesture.original.y + dy;
+      } else {
+        const silhouette = silhouetteById(gesture.silhouetteId);
+        if (!silhouette) return;
+        silhouette.offsetX = roundSilhouetteOffset(gesture.original.x + dx);
+        silhouette.offsetY = roundSilhouetteOffset(gesture.original.y + dy);
+      }
+      updateSilhouettePreview();
+      if (gesture.object === 'shape' && gesture.silhouetteId) {
+        syncShapeRangeUiForSilhouette(gesture.silhouetteId);
+      }
+    }
+
+    function startResize(event) {
+      const objectName = state.selectedObject;
+      const svg = document.querySelector('.canvas-svg');
+      const target = svg && svg.querySelector(`[data-object="${objectName}"]`);
+      if (!target) return null;
+      const bbox = target.getBBox();
+      const center = { x: bbox.x + bbox.width / 2, y: bbox.y + bbox.height / 2 };
+      const startPt = pointerToSvg(event);
+      const startDist = Math.max(1, Math.hypot(startPt.x - center.x, startPt.y - center.y));
+
+      if (objectName === 'image') {
+        return {
+          kind: 'resize',
+          object: 'image',
+          startScale: state.imageTransform.scale,
+          center,
+          startDist
+        };
+      }
+      return {
+        kind: 'resize',
+        object: 'shape',
+        silhouetteId: getActiveSilhouette().id,
+        startScale: getActiveSilhouette().scale,
+        center,
+        startDist
+      };
+    }
+
+    function applyResize(gesture, event) {
+      const pt = pointerToSvg(event);
+      const dist = Math.hypot(pt.x - gesture.center.x, pt.y - gesture.center.y);
+      const factor = Math.max(0.05, dist / gesture.startDist);
+      const newScale = clamp(gesture.startScale * factor, 5, 800);
+
+      if (gesture.object === 'image') {
+        const W = state.cutoutImage.naturalWidth;
+        const H = state.cutoutImage.naturalHeight;
+        const newW = W * newScale / 100;
+        const newH = H * newScale / 100;
+        state.imageTransform.scale = newScale;
+        state.imageTransform.x = gesture.center.x - newW / 2;
+        state.imageTransform.y = gesture.center.y - newH / 2;
+        updateSilhouettePreview();
+        return;
+      }
+
+      const silhouette = silhouetteById(gesture.silhouetteId);
+      if (!silhouette) return;
+      silhouette.scale = newScale;
+      updateSilhouettePreview();
+      const newSvg = document.querySelector('.canvas-svg');
+      const newPath = newSvg && newSvg.querySelector('[data-object="shape"]');
+      if (!newPath) return;
+      const newBbox = newPath.getBBox();
+      const newCenter = { x: newBbox.x + newBbox.width / 2, y: newBbox.y + newBbox.height / 2 };
+      silhouette.offsetX = roundSilhouetteOffset(silhouette.offsetX + (gesture.center.x - newCenter.x));
+      silhouette.offsetY = roundSilhouetteOffset(silhouette.offsetY + (gesture.center.y - newCenter.y));
+      updateSilhouettePreview();
+      syncShapeRangeUiForSilhouette(gesture.silhouetteId);
+    }
+
+    function silhouettePath(silhouette, extraScale = 1, offsetMultiplier = 1) {
+      if (!state.contour.length) {
+        state.contour = extractContour(state.cutoutImage);
+      }
+
+      const epsilon = silhouette.angularity;
+      const simplified = simplifyRdp(state.contour, epsilon);
+      const width = state.cutoutImage.naturalWidth;
+      const height = state.cutoutImage.naturalHeight;
+      const cx = width / 2;
+      const cy = height / 2;
+      const scale = (silhouette.scale / 100) * extraScale;
+      const offsetX = silhouette.offsetX * offsetMultiplier;
+      const offsetY = silhouette.offsetY * offsetMultiplier;
+      const points = simplified.map((point) => {
+        const x = cx + (point.x - cx) * scale + offsetX;
+        const y = cy + (point.y - cy) * scale + offsetY;
+        return `${x.toFixed(1)} ${y.toFixed(1)}`;
+      });
+
+      return points.length ? `M ${points.join(' L ')} Z` : '';
+    }
+
+    function compoundSilhouettePath(silhouette, extraScale = 1, offsetMultiplier = 1) {
+      const basePath = silhouettePath(silhouette, extraScale, offsetMultiplier);
+      if (!basePath) return '';
+
+      const cutoutPaths = silhouette.cutouts
+        .map((polygon) => polygonPath(silhouette, polygon, extraScale, offsetMultiplier))
+        .filter(Boolean);
+
+      return [basePath, ...cutoutPaths].join(' ');
+    }
+
+    function polygonPath(_silhouette, points, extraScale = 1, _offsetMultiplier = 1) {
+      if (!points || points.length < 3) return '';
+      const width = state.cutoutImage.naturalWidth;
+      const height = state.cutoutImage.naturalHeight;
+      const cx = width / 2;
+      const cy = height / 2;
+      const coords = points.map((point) => {
+        const x = cx + (point.x - cx) * extraScale;
+        const y = cy + (point.y - cy) * extraScale;
+        return `${x.toFixed(1)} ${y.toFixed(1)}`;
+      });
+      return `M ${coords.join(' L ')} Z`;
+    }
+
+    function extractContour(image) {
+      const maxGrid = 220;
+      const scale = Math.max(image.naturalWidth, image.naturalHeight) / maxGrid;
+      const gridWidth = Math.max(1, Math.round(image.naturalWidth / scale));
+      const gridHeight = Math.max(1, Math.round(image.naturalHeight / scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = gridWidth;
+      canvas.height = gridHeight;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(image, 0, 0, gridWidth, gridHeight);
+      const data = ctx.getImageData(0, 0, gridWidth, gridHeight).data;
+      const grid = new Uint8Array(gridWidth * gridHeight);
+
+      for (let y = 0; y < gridHeight; y += 1) {
+        for (let x = 0; x < gridWidth; x += 1) {
+          grid[y * gridWidth + x] = data[(y * gridWidth + x) * 4 + 3] > 30 ? 1 : 0;
+        }
+      }
+
+      const traced = traceMooreContour(grid, gridWidth, gridHeight);
+      const points = traced.length ? traced : boundaryFallback(grid, gridWidth, gridHeight);
+      return points.map((point) => ({ x: point.x * scale, y: point.y * scale }));
+    }
+
+    function isForeground(grid, width, height, x, y) {
+      return x >= 0 && y >= 0 && x < width && y < height && grid[y * width + x] === 1;
+    }
+
+    function isBoundary(grid, width, height, x, y) {
+      if (!isForeground(grid, width, height, x, y)) return false;
+      for (let yy = -1; yy <= 1; yy += 1) {
+        for (let xx = -1; xx <= 1; xx += 1) {
+          if (!isForeground(grid, width, height, x + xx, y + yy)) return true;
+        }
+      }
+      return false;
+    }
+
+    function traceMooreContour(grid, width, height) {
+      const dirs = [
+        { x: -1, y: 0 }, { x: -1, y: -1 }, { x: 0, y: -1 }, { x: 1, y: -1 },
+        { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 0, y: 1 }, { x: -1, y: 1 }
+      ];
+      let start = null;
+
+      for (let y = 0; y < height && !start; y += 1) {
+        for (let x = 0; x < width; x += 1) {
+          if (isBoundary(grid, width, height, x, y)) {
+            start = { x, y };
+            break;
+          }
+        }
+      }
+
+      if (!start) return [];
+
+      const contour = [];
+      let current = start;
+      let previous = { x: start.x - 1, y: start.y };
+      const maxSteps = width * height * 4;
+
+      for (let step = 0; step < maxSteps; step += 1) {
+        contour.push({ ...current });
+        const previousIndex = dirs.findIndex((dir) => current.x + dir.x === previous.x && current.y + dir.y === previous.y);
+        let found = null;
+        let foundPrevious = null;
+
+        for (let i = 1; i <= 8; i += 1) {
+          const dirIndex = (previousIndex + i + 8) % 8;
+          const dir = dirs[dirIndex];
+          const next = { x: current.x + dir.x, y: current.y + dir.y };
+
+          if (isForeground(grid, width, height, next.x, next.y)) {
+            const backDir = dirs[(dirIndex + 7) % 8];
+            found = next;
+            foundPrevious = { x: current.x + backDir.x, y: current.y + backDir.y };
+            break;
+          }
+        }
+
+        if (!found) break;
+        previous = foundPrevious;
+        current = found;
+
+        if (current.x === start.x && current.y === start.y && contour.length > 8) break;
+      }
+
+      return contour;
+    }
+
+    function boundaryFallback(grid, width, height) {
+      const points = [];
+      for (let y = 0; y < height; y += 1) {
+        for (let x = 0; x < width; x += 1) {
+          if (isBoundary(grid, width, height, x, y)) points.push({ x, y });
+        }
+      }
+
+      const cx = points.reduce((sum, point) => sum + point.x, 0) / Math.max(1, points.length);
+      const cy = points.reduce((sum, point) => sum + point.y, 0) / Math.max(1, points.length);
+      return points.sort((a, b) => Math.atan2(a.y - cy, a.x - cx) - Math.atan2(b.y - cy, b.x - cx));
+    }
+
+    function simplifyRdp(points, epsilon) {
+      if (points.length < 3) return points;
+      let maxDistance = 0;
+      let index = 0;
+      const end = points.length - 1;
+
+      for (let i = 1; i < end; i += 1) {
+        const distance = pointLineDistance(points[i], points[0], points[end]);
+        if (distance > maxDistance) {
+          index = i;
+          maxDistance = distance;
+        }
+      }
+
+      if (maxDistance > epsilon) {
+        const left = simplifyRdp(points.slice(0, index + 1), epsilon);
+        const right = simplifyRdp(points.slice(index), epsilon);
+        return left.slice(0, -1).concat(right);
+      }
+
+      return [points[0], points[end]];
+    }
+
+    function pointLineDistance(point, start, end) {
+      const dx = end.x - start.x;
+      const dy = end.y - start.y;
+      if (dx === 0 && dy === 0) return Math.hypot(point.x - start.x, point.y - start.y);
+      return Math.abs(dy * point.x - dx * point.y + end.x * start.y - end.y * start.x) / Math.hypot(dx, dy);
+    }
+
+    async function flattenStageFour() {
+      if (!state.cutoutImage) state.cutoutImage = await loadImage(state.cutoutUrl);
+      const W = state.cutoutImage.naturalWidth;
+      const H = state.cutoutImage.naturalHeight;
+      const silhouetteCanvas = document.createElement('canvas');
+      silhouetteCanvas.width = W;
+      silhouetteCanvas.height = H;
+      const silhouetteCtx = silhouetteCanvas.getContext('2d', { willReadFrequently: true });
+
+      [...state.silhouettes].reverse().forEach((silhouette) => {
+        if (silhouette.enabled) {
+          drawShapePath(silhouetteCtx, silhouette, 1, 1);
+        }
+      });
+
+      const imageCanvas = document.createElement('canvas');
+      imageCanvas.width = W;
+      imageCanvas.height = H;
+      const imageCtx = imageCanvas.getContext('2d', { willReadFrequently: true });
+      const it = state.imageTransform;
+      const sw = W * it.scale / 100;
+      const sh = H * it.scale / 100;
+      imageCtx.drawImage(state.cutoutImage, it.x, it.y, sw, sh);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(silhouetteCanvas, 0, 0);
+      ctx.drawImage(imageCanvas, 0, 0);
+
+      state.stage4SilhouetteCanvas = silhouetteCanvas;
+      state.stage4ImageCanvas = imageCanvas;
+      return canvas;
+    }
+
+    function drawShapePath(ctx, silhouette, extraScale, offsetMultiplier) {
+      const path = silhouettePath(silhouette, extraScale, offsetMultiplier);
+      if (!path) return;
+      ctx.save();
+      ctx.fillStyle = silhouette.color;
+      ctx.fill(new Path2D(path));
+      silhouette.cutouts.forEach((polygon) => {
+        const cutoutPath = polygonPath(silhouette, polygon, extraScale, offsetMultiplier);
+        if (!cutoutPath) return;
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.fill(new Path2D(cutoutPath));
+      });
+      ctx.restore();
+    }
+
+    function renderGrainStage() {
+      state.effectsPipeline = { applyGrain: true, applyThreshold: false };
+      const stage = document.createElement('div');
+      stage.className = 'stage';
+      stage.innerHTML = `
+        <div class="stage-heading">
+          <h2 class="stage-title">Grain</h2>
+          <p class="stage-help">Add film grain and tone tweaks. Continue to threshold when you're happy.</p>
+        </div>
+        <div class="effects-grid">
+          <div class="panel checker">
+            <canvas class="canvas-preview" id="effects-canvas"></canvas>
+          </div>
+          <div class="effects-controls">
+            ${effectsSection('Grain', [
+              checkboxControl('Enable', 'grainEnabled'),
+              effectRange('Amount', 'grainAmount', 0, 80),
+              effectRange('Size', 'grainSize', 1, 4),
+              effectRange('Blend', 'grainBlend', 0, 100)
+            ])}
+            ${effectsSection('Tone', [
+              effectRange('Contrast', 'contrast', -50, 100),
+              effectRange('Brightness', 'brightness', -60, 60)
+            ])}
+          </div>
+        </div>
+      `;
+      workspace.append(stage);
+      state.effectsCanvas = document.getElementById('effects-canvas');
+      attachEffectsControls();
+      renderEffectsCanvas();
+      bottombar.append(button('Continue to threshold', 'primary', () => setStage(6)));
+    }
+
+    function renderThresholdStage() {
+      state.effectsPipeline = { applyGrain: true, applyThreshold: true };
+      const stage = document.createElement('div');
+      stage.className = 'stage';
+      stage.innerHTML = `
+        <div class="stage-heading">
+          <h2 class="stage-title">Threshold</h2>
+          <p class="stage-help">Apply a threshold for high-contrast posterization, then export your PNG.</p>
+        </div>
+        <div class="effects-grid">
+          <div class="panel checker">
+            <canvas class="canvas-preview" id="effects-canvas"></canvas>
+          </div>
+          <div class="effects-controls">
+            ${effectsSection('Threshold', [
+              checkboxControl('Enable', 'thresholdEnabled'),
+              effectRange('Level', 'thresholdLevel', 60, 220),
+              effectRange('Softness', 'thresholdSoftness', 0, 40)
+            ])}
+          </div>
+        </div>
+      `;
+      workspace.append(stage);
+      state.effectsCanvas = document.getElementById('effects-canvas');
+      attachEffectsControls();
+      renderEffectsCanvas();
+      bottombar.append(
+        button('Export without effects', 'secondary', () => exportCanvas(state.stage4Canvas, 'since67-cutout.png')),
+        button('Export PNG', 'secondary', () => exportCanvas(state.effectsCanvas, 'since67-cutout.png')),
+        button('Proceed to poster', 'primary', proceedToPoster)
+      );
+    }
+
+    function proceedToPoster() {
+      if (!state.effectsCanvas) return;
+      localStorage.setItem(HERO_CUTOUT_HANDOFF_KEY, state.effectsCanvas.toDataURL('image/png'));
+      window.location.href = 'index.html?fromCutout=1';
+    }
+
+    function effectsSection(title, controls) {
+      return `<section class="control-section"><h3>${title}</h3>${controls.join('')}</section>`;
+    }
+
+    function checkboxControl(label, prop) {
+      return `<label class="compact-row"><span>${label}</span><input data-effect="${prop}" type="checkbox" ${state.effects[prop] ? 'checked' : ''}><span></span></label>`;
+    }
+
+    function effectRange(label, prop, min, max) {
+      return `
+        <label class="compact-row">
+          <span>${label}</span>
+          <input data-effect="${prop}" type="range" min="${min}" max="${max}" step="1" value="${state.effects[prop]}">
+          <span>${state.effects[prop]}</span>
+        </label>
+      `;
+    }
+
+    function attachEffectsControls() {
+      document.querySelectorAll('[data-effect]').forEach((input) => {
+        input.addEventListener('input', () => {
+          const prop = input.dataset.effect;
+          state.effects[prop] = input.type === 'checkbox' ? input.checked : Number(input.value);
+          if (input.type !== 'checkbox') input.nextElementSibling.textContent = input.value;
+          queueEffectsRender();
+        });
+      });
+    }
+
+    let effectsFrame = 0;
+    function queueEffectsRender() {
+      cancelAnimationFrame(effectsFrame);
+      effectsFrame = requestAnimationFrame(renderEffectsCanvas);
+    }
+
+    function renderEffectsCanvas() {
+      const source = state.stage4ImageCanvas || state.stage4Canvas;
+      const canvas = state.effectsCanvas;
+      if (!source || !canvas) return;
+      canvas.width = source.width;
+      canvas.height = source.height;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(source, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      const contrastFactor = (259 * (state.effects.contrast + 255)) / (255 * (259 - state.effects.contrast));
+      const pipeline = state.effectsPipeline || { applyGrain: true, applyThreshold: true };
+
+      for (let i = 0; i < data.length; i += 4) {
+        const alpha = data[i + 3];
+        if (alpha === 0) continue;
+
+        let value = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+        value += state.effects.brightness;
+        value = contrastFactor * (value - 128) + 128;
+
+        if (pipeline.applyGrain && state.effects.grainEnabled) {
+          const pixel = i / 4;
+          const x = pixel % canvas.width;
+          const y = Math.floor(pixel / canvas.width);
+          const grainSeed = Math.floor(x / state.effects.grainSize) * 12.9898 + Math.floor(y / state.effects.grainSize) * 78.233;
+          const grain = (Math.sin(grainSeed) * 43758.5453) % 1;
+          value += (grain - 0.5) * state.effects.grainAmount * (state.effects.grainBlend / 100);
+        }
+
+        if (pipeline.applyThreshold && state.effects.thresholdEnabled) {
+          const softness = Math.max(0.001, state.effects.thresholdSoftness);
+          const threshold = state.effects.thresholdLevel;
+          value = clamp(((value - threshold + softness) / (softness * 2)) * 255, 0, 255);
+        }
+
+        value = clamp(value, 0, 255);
+        data[i] = value;
+        data[i + 1] = value;
+        data[i + 2] = value;
+        data[i + 3] = alpha;
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+      if (state.stage4SilhouetteCanvas) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-over';
+        ctx.drawImage(state.stage4SilhouetteCanvas, 0, 0);
+        ctx.restore();
+      }
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function exportCanvas(canvas, filename) {
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    function loadImage(src) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = reject;
+        image.src = src;
+      });
+    }
+
+    function canvasToBlob(canvas) {
+      return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+    }
+
+    function revokeUrl(key) {
+      if (state[key]) URL.revokeObjectURL(state[key]);
+      state[key] = '';
+    }
+
+    function revokeSource() {
+      ['sourceUrl', 'croppedUrl', 'cutoutUrl'].forEach(revokeUrl);
+    }
+
+    function resetMaskRefinement() {
+      state.maskSourceImage = null;
+      state.maskOverlayCanvas = null;
+      state.maskMode = 'add';
+    }
+
+    function resetAll() {
+      revokeSource();
+      state.stage = 1;
+      state.sourceFile = null;
+      state.sourceImage = null;
+      state.sourceWidth = 0;
+      state.sourceHeight = 0;
+      state.crop = null;
+      state.croppedBlob = null;
+      state.cutoutBlob = null;
+      state.cutoutImage = null;
+      resetMaskRefinement();
+      state.contour = [];
+      state.stage4Canvas = null;
+      state.stage4SilhouetteCanvas = null;
+      state.stage4ImageCanvas = null;
+      state.effectsCanvas = null;
+      state.imageTransform = { x: 0, y: 0, scale: 100 };
+      state.selectedObject = null;
+      state.silhouettes = [createSilhouette()];
+      state.activeSilhouetteId = state.silhouettes[0].id;
+      state.focusLayer = 'image';
+      state.effects = { ...presets.poster };
+      state.effectsPipeline = { applyGrain: true, applyThreshold: true };
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>

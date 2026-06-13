@@ -1,0 +1,3259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Since 1967 Poster Tool</title>
+  <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
+  <style>
+    @font-face {
+      font-family: 'DharmaGothicE_ExLight_R';
+      src: url('https://static.wfonts.com/data/2016/07/03/dharma-gothic-e/DharmaGothicE_ExLight_R.otf') format('opentype');
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: 'DharmaGothicE_Bold_R';
+      src: url('https://static.wfonts.com/data/2016/07/03/dharma-gothic-e/DharmaGothicE_Bold_R.woff') format('woff');
+      font-display: swap;
+    }
+
+    :root {
+      --panel-width: 280px;
+      --poster-width: min(72vh, calc(100vw - var(--panel-width) - 120px));
+      --poster-ratio: 3768 / 4797;
+      --white: #f5f5f5;
+      --muted: #9c9c9c;
+      --panel: #222;
+      --field: #2a2a2a;
+      --canvas: #1a1a1a;
+      --export-width: 3768;
+      --digit-gap-1-2: -22%;
+      --digit-gap-2-3: -17%;
+      --digit-gap-3-4: -20%;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      overflow: hidden;
+    }
+
+    body {
+      margin: 0;
+      min-width: 720px;
+      height: 100vh;
+      overflow: hidden;
+      background: var(--canvas);
+      color: var(--white);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: var(--panel-width) 8px minmax(400px, 1fr);
+      height: 100vh;
+      background: var(--canvas);
+    }
+
+    .controls {
+      overflow-y: auto;
+      background: var(--panel);
+      border-right: 1px solid #303030;
+      padding: 18px;
+    }
+
+    .brand {
+      margin: 0 0 22px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .section {
+      margin-bottom: 28px;
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .panel-divider {
+      height: 1px;
+      margin: 6px 0 22px;
+      border: 0;
+      background: #3a3a3a;
+    }
+
+    .uploads-section--hero {
+      margin: 0 -18px;
+      padding: 0 18px 4px;
+    }
+
+    .uploads-section--hero .section-title {
+      color: #b8c4d4;
+    }
+
+    .upload-slot--hero .slot-name {
+      color: #f5f5f5;
+    }
+
+    .upload-slot--hero:not(.is-fan-target-active) .thumb {
+      border-color: #5a8fd4;
+      background: #0a2248;
+    }
+
+    .upload-slot--hero .upload-button:not(.secondary-action) {
+      background: transparent;
+      border-color: #e8eef8;
+      color: #fff;
+    }
+
+    .upload-slot--hero .upload-button:not(.secondary-action):hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: #fff;
+      color: #fff;
+    }
+
+    .upload-slot--hero .secondary-action {
+      background: #f0f0f0;
+      border-color: #f0f0f0;
+      color: #111;
+    }
+
+    .upload-slot--hero .secondary-action:hover {
+      background: #fff;
+      border-color: #fff;
+      color: #000;
+    }
+
+    .upload-slot--hero:not(.is-fan-target-active) .secondary-action-wrap {
+      border-top-color: #3a6eb5;
+    }
+
+    .upload-slot--hero .image-control-row,
+    .upload-slot--hero .flip-control {
+      color: #e8eef8;
+    }
+
+    .upload-slot--hero .control-reset-link {
+      color: #a8b8cc;
+    }
+
+    .upload-slot--hero .control-reset-link:hover {
+      color: #fff;
+    }
+
+    .upload-slot--hero .fan-range,
+    .upload-slot--hero .fan-flip {
+      accent-color: #e8eef8;
+    }
+
+    .field-group {
+      margin-bottom: 14px;
+    }
+
+    .field-label {
+      display: block;
+      margin-bottom: 7px;
+      color: #d6d6d6;
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .text-input {
+      display: block;
+      width: 100%;
+      height: 38px;
+      border: 1px solid #3a3a3a;
+      border-radius: 0;
+      background: var(--field);
+      color: var(--white);
+      padding: 0 10px;
+      outline: none;
+    }
+
+    .text-input:focus {
+      border-color: #666;
+    }
+
+    .upload-slot {
+      display: grid;
+      grid-template-columns: 54px 1fr;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+      padding: 10px;
+      background: var(--field);
+      border: 1px solid #373737;
+      transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .upload-slot.upload-slot--hero:not(.is-fan-target-active) {
+      background: #0d2b5e;
+      border-color: #3a6eb5;
+    }
+
+    .upload-slot[data-fan-panel].is-fan-target-active {
+      border-color: #141414;
+      background: #ffffff;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+      color: #111;
+    }
+
+    .upload-slot[data-fan-panel].is-fan-target-active .slot-name {
+      color: #111;
+    }
+
+    .upload-slot[data-fan-panel].is-fan-target-active .thumb {
+      border-color: #bdbdbd;
+      background: #ebebeb;
+    }
+
+    .upload-slot[data-fan-panel].is-fan-target-active .thumb:focus-visible {
+      outline-color: #111;
+    }
+
+    .upload-slot[data-fan-panel].is-fan-target-active .upload-button:not(.secondary-action) {
+      background: #e6e6e6;
+      color: #111;
+      border-color: #111;
+    }
+
+    .upload-slot[data-fan-panel].is-fan-target-active .upload-button:not(.secondary-action):hover {
+      background: #d4d4d4;
+      border-color: #000;
+      color: #000;
+    }
+
+    .upload-slot[data-fan-panel].is-fan-target-active .secondary-action {
+      background: #111;
+      color: #f5f5f5;
+      border-color: #111;
+    }
+
+    .upload-slot[data-fan-panel].is-fan-target-active .secondary-action:hover {
+      background: #000;
+      border-color: #000;
+      color: #fff;
+    }
+
+    .upload-slot[data-fan-panel].is-fan-target-active .secondary-action-wrap,
+    .upload-slot[data-fan-panel].is-fan-target-active .fan-cutout-placeholder-wrap {
+      border-top-color: #cfcfcf;
+    }
+
+    .upload-slot[data-fan-panel].is-fan-target-active .image-control-row,
+    .upload-slot[data-fan-panel].is-fan-target-active .flip-control {
+      color: #1a1a1a;
+    }
+
+    .upload-slot[data-fan-panel].is-fan-target-active .fan-flip {
+      accent-color: #111;
+    }
+
+    .upload-slot[data-fan-panel].is-fan-target-active .control-reset-link {
+      color: #444;
+    }
+
+    .upload-slot[data-fan-panel].is-fan-target-active .control-reset-link:hover {
+      color: #000;
+    }
+
+    .upload-slot[data-fan-panel].is-fan-target-active .fan-range {
+      accent-color: #111;
+    }
+
+    .thumb {
+      width: 54px;
+      height: 54px;
+      background: #555;
+      border: 1px solid #6b6b6b;
+      object-fit: cover;
+    }
+
+    .upload-slot[data-fan-panel] .thumb {
+      cursor: pointer;
+    }
+
+    .upload-slot[data-fan-panel] .thumb:focus-visible {
+      outline: 2px solid #c8c8c8;
+      outline-offset: 2px;
+    }
+
+    .slot-name {
+      margin-bottom: 7px;
+      color: #e6e6e6;
+      font-size: 12px;
+    }
+
+    .file-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+    }
+
+    .file-input-offscreen {
+      position: fixed;
+      left: -9999px;
+      top: 0;
+      width: 1px;
+      height: 1px;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      opacity: 0;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .upload-button,
+    .export-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 32px;
+      border: 1px solid #555;
+      border-radius: 0;
+      background: #333;
+      color: var(--white);
+      cursor: pointer;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .upload-button {
+      width: 100%;
+    }
+
+    .secondary-action {
+      margin-top: 10px;
+      width: 100%;
+      min-height: 30px;
+      background: #f0f0f0;
+      color: #111;
+      border-color: #f0f0f0;
+      font-size: 11px;
+    }
+
+    .secondary-action-wrap {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #3a3a3a;
+    }
+
+    .secondary-action-wrap.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .secondary-action-wrap.full-width .secondary-action {
+      margin-top: 0;
+    }
+
+    .secondary-action:hover {
+      background: #fff;
+      border-color: #fff;
+    }
+
+    .image-controls {
+      grid-column: 1 / -1;
+      display: grid;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .control-reset-wrap {
+      grid-column: 1 / -1;
+      margin-top: 2px;
+    }
+
+    .control-reset-link {
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--muted);
+      font-size: 11px;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .control-reset-link:hover {
+      color: #d6d6d6;
+    }
+
+    .fan-cutout-placeholder-wrap {
+      grid-column: 1 / -1;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #3a3a3a;
+    }
+
+    .fan-cutout-placeholder {
+      margin-top: 0;
+    }
+
+    .image-control-row {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 8px;
+      align-items: center;
+      color: #cfcfcf;
+      font-size: 11px;
+    }
+
+    .image-control-row input[type="range"] {
+      width: 100%;
+    }
+
+    .flip-control {
+      display: inline-flex;
+      gap: 7px;
+      align-items: center;
+      color: #d6d6d6;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .export-button {
+      width: 100%;
+      min-height: 42px;
+      background: #f0f0f0;
+      color: #111;
+      border-color: #f0f0f0;
+      font-weight: 700;
+    }
+
+    .upload-button:hover {
+      background: #3b3b3b;
+    }
+
+    .export-button:hover {
+      background: #fff;
+      border-color: #fff;
+    }
+
+    .resize-handle {
+      cursor: col-resize;
+      background: #242424;
+      border-right: 1px solid #111;
+      border-left: 1px solid #303030;
+    }
+
+    .resize-handle:hover,
+    body.resizing .resize-handle {
+      background: #3a3a3a;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      display: grid;
+      place-items: start center;
+      align-content: start;
+      min-width: 400px;
+      max-width: 85vw;
+      height: 100vh;
+      overflow: auto;
+      padding: 42px;
+      background: radial-gradient(circle, #333 1px, transparent 1px);
+      background-size: 24px 24px;
+      background-color: var(--canvas);
+    }
+
+    .poster-shell {
+      width: clamp(360px, var(--poster-width), 720px);
+      aspect-ratio: var(--poster-ratio);
+      display: grid;
+      place-items: center;
+    }
+
+    .poster {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #02050f;
+      color: #fff;
+      font-family: Arial, Helvetica, sans-serif;
+      isolation: isolate;
+    }
+
+    .poster-layer {
+      position: absolute;
+      display: block;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .poster-bg {
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+    }
+
+    .fan-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      mix-blend-mode: luminosity;
+      pointer-events: none;
+      isolation: isolate;
+    }
+
+    .fan-layer::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      mix-blend-mode: luminosity;
+      opacity: 0.45;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1 1' numOctaves='3' stitchTiles='stitch' seed='9826'/%3E%3CfeColorMatrix type='luminanceToAlpha'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='discrete' tableValues='1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0'/%3E%3C/feComponentTransfer%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' fill='black'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 256px 256px;
+      z-index: 1;
+    }
+
+    .fan {
+      display: block;
+      position: absolute;
+      z-index: 0;
+      width: 25%;
+      height: auto;
+      object-fit: contain;
+      box-sizing: border-box;
+      border: 2px solid transparent;
+      pointer-events: auto;
+      cursor: grab;
+      touch-action: none;
+      -webkit-user-drag: none;
+      user-select: none;
+      --fan-x: 0%;
+      --fan-y: 0%;
+      --fan-rot: 0deg;
+      --fan-scale: 1;
+      --fan-flip: 1;
+      --fan-upload-grayscale: 0;
+      --fan-exposure: 1;
+      --fan-contrast: 1;
+      opacity: 1;
+      mix-blend-mode: normal;
+      filter: grayscale(var(--fan-upload-grayscale)) brightness(var(--fan-exposure)) contrast(var(--fan-contrast));
+      transform: translate(var(--fan-x), var(--fan-y)) rotate(var(--fan-rot)) scaleX(var(--fan-flip)) scale(var(--fan-scale));
+      transform-origin: center;
+    }
+
+    .fan.dragging {
+      cursor: grabbing;
+    }
+
+    .fan-blue-brush {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 130%;
+      height: 130%;
+      object-fit: cover;
+      transform: translate(-50%, -50%);
+      z-index: 3;
+      opacity: 1;
+      mix-blend-mode: overlay;
+      pointer-events: none;
+    }
+
+    .fan.top-left {
+      left: 8%;
+      top: 17%;
+      --fan-x: 14%;
+      --fan-y: -8%;
+      --fan-rot: -2deg;
+    }
+
+    .fan.bottom-left {
+      left: -1%;
+      top: 39%;
+      --fan-x: 31.9%;
+      --fan-y: -14.6%;
+      --fan-rot: -11deg;
+      --fan-scale: 0.83;
+    }
+
+    .fan.top-right {
+      right: 2%;
+      top: 21%;
+      --fan-x: -32%;
+      --fan-y: -15.8%;
+      --fan-rot: 2.5deg;
+      --fan-scale: 1.2;
+    }
+
+    .fan.bottom-right {
+      right: -1%;
+      top: 40%;
+      --fan-x: -28.3%;
+      --fan-y: -8.6%;
+      --fan-rot: 10deg;
+      --fan-scale: 1.15;
+    }
+
+    .display-type {
+      z-index: 4;
+      left: 50%;
+      top: 49%;
+      width: 74%;
+      transform: translate(-50%, -50%) rotate(-2deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.15));
+    }
+
+    .display-digit {
+      width: 40%;
+      aspect-ratio: 1 / 2.35;
+      object-fit: contain;
+      --digit-rot: 0deg;
+      --digit-scale: 1;
+      animation: digit-jitter var(--jitter-duration, 1.8s) steps(4, end) infinite alternate;
+      animation-delay: var(--jitter-delay, 0s);
+    }
+
+    .display-digit:nth-child(2) { margin-left: var(--digit-gap-1-2); }
+    .display-digit:nth-child(3) { margin-left: var(--digit-gap-2-3); }
+    .display-digit:nth-child(4) { margin-left: var(--digit-gap-3-4); }
+
+    .display-digit:nth-child(1) {
+      --digit-rot: -1.5deg;
+      --digit-scale: 1.01;
+    }
+
+    .display-digit:nth-child(2) {
+      --digit-rot: 1.2deg;
+      --digit-scale: 1.1;
+    }
+
+    .display-digit:nth-child(3) {
+      --digit-rot: -0.8deg;
+      --digit-scale: 1.3;
+    }
+
+    .display-digit:nth-child(4) {
+      --digit-rot: 1.8deg;
+      --digit-scale: 0.93;
+    }
+
+    @keyframes digit-jitter {
+      0% {
+        transform: translateY(calc(var(--jitter-amp, 0.7%) * -1)) rotate(var(--digit-rot)) scale(var(--digit-scale));
+      }
+
+      100% {
+        transform: translateY(var(--jitter-amp, 0.7%)) rotate(var(--digit-rot)) scale(var(--digit-scale));
+      }
+    }
+
+    .leaf {
+      z-index: 5;
+      left: 50%;
+      top: 51%;
+      width: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.98;
+      mix-blend-mode: normal;
+    }
+
+    .player {
+      z-index: 6;
+      left: 50%;
+      top: 51%;
+      width: 40%;
+      --fan-x: -50%;
+      --fan-y: -50%;
+      --fan-rot: 0deg;
+      --fan-scale: 1;
+      --fan-flip: 1;
+      transform: translate(var(--fan-x), var(--fan-y)) rotate(var(--fan-rot)) scaleX(var(--fan-flip)) scale(var(--fan-scale));
+      filter: drop-shadow(0 0 0 #fff);
+      box-sizing: border-box;
+      border: 2px dotted transparent;
+      pointer-events: auto;
+      cursor: grab;
+      touch-action: none;
+      -webkit-user-drag: none;
+      user-select: none;
+    }
+
+    .player.dragging {
+      cursor: grabbing;
+    }
+
+    .fan-selection-frame {
+      position: absolute;
+      z-index: 18;
+      box-sizing: border-box;
+      border: 2px dotted #ffffff;
+      pointer-events: none;
+      transform-origin: center;
+      --fan-x: 0%;
+      --fan-y: 0%;
+      --fan-rot: 0deg;
+      --fan-scale: 1;
+      --fan-flip: 1;
+      transform: translate(var(--fan-x), var(--fan-y)) rotate(var(--fan-rot)) scaleX(var(--fan-flip)) scale(var(--fan-scale));
+      display: none;
+    }
+
+    .fan-selection-frame.is-visible {
+      display: block;
+    }
+
+    .fan-asset-handle {
+      position: absolute;
+      z-index: 19;
+      width: 28px;
+      height: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      touch-action: none;
+      transform: translate(-50%, -50%);
+      pointer-events: auto;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+      transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .fan-asset-handle.is-visible {
+      display: flex;
+    }
+
+    .fan-asset-handle svg {
+      width: 14px;
+      height: 14px;
+      color: #fff;
+      pointer-events: none;
+      transition: color 0.15s ease;
+    }
+
+    .fan-asset-handle:hover {
+      background: rgba(255, 255, 255, 0.22);
+      border-color: rgba(255, 255, 255, 0.8);
+    }
+
+    .fan-asset-handle:active,
+    .fan-asset-handle.dragging {
+      background: #fff;
+      border-color: #111;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+    }
+
+    .fan-asset-handle:active svg,
+    .fan-asset-handle.dragging svg {
+      color: #111;
+    }
+
+    .fan-asset-rotate-handle {
+      cursor: grab;
+    }
+
+    .fan-asset-rotate-handle.dragging {
+      cursor: grabbing;
+    }
+
+    .fan-asset-resize-handle {
+      cursor: nesw-resize;
+    }
+
+    .fan-asset-resize-handle.is-left-side {
+      cursor: nwse-resize;
+    }
+
+    .fan-asset-resize-handle.dragging {
+      cursor: grabbing;
+    }
+
+    .subline {
+      position: absolute;
+      z-index: 7;
+      left: 50%;
+      bottom: 11%;
+      width: 82%;
+      transform: translateX(-50%);
+      color: #f2f2f2;
+      font-family: 'DharmaGothicE_ExLight_R', Arial, Helvetica, sans-serif;
+      font-size: clamp(9px, 1.2vw, 14px);
+      letter-spacing: 0.38em;
+      text-align: center;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .subline strong {
+      font-family: 'DharmaGothicE_Bold_R', Arial, Helvetica, sans-serif;
+      font-weight: 700;
+      letter-spacing: 0.44em;
+    }
+
+    .footer {
+      position: absolute;
+      z-index: 8;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 8.8%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 4.3%;
+      background: transparent;
+    }
+
+    .footer-text {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      text-transform: uppercase;
+    }
+
+    .date-line {
+      font-family: 'Geist', Arial, Helvetica, sans-serif;
+      font-size: clamp(7px, 0.85vw, 10px);
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .season-line {
+      font-family: 'Geist', Arial, Helvetica, sans-serif;
+      color: #d7d7d7;
+      font-size: clamp(7px, 0.8vw, 10px);
+      letter-spacing: 0;
+    }
+
+    .qr {
+      width: 8.8%;
+      aspect-ratio: 1;
+      object-fit: cover;
+    }
+
+    .fan-cutout-modal[hidden] {
+      display: none;
+    }
+
+    .fan-cutout-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      background: rgba(0, 0, 0, 0.72);
+    }
+
+    .fan-cutout-dialog {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      width: min(860px, calc(100vw - 56px));
+      max-height: calc(100vh - 56px);
+      border: 1px solid #3a3a3a;
+      background: var(--panel);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+    }
+
+    .fan-cutout-header,
+    .fan-cutout-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #303030;
+    }
+
+    .fan-cutout-footer {
+      justify-content: flex-end;
+      border-top: 1px solid #303030;
+      border-bottom: 0;
+    }
+
+    .fan-cutout-title {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .fan-cutout-close,
+    .fan-cutout-action {
+      min-height: 32px;
+      border: 1px solid #555;
+      border-radius: 0;
+      background: #333;
+      color: var(--white);
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 0 12px;
+      text-transform: uppercase;
+    }
+
+    .fan-cutout-action.primary {
+      background: #f0f0f0;
+      border-color: #f0f0f0;
+      color: #111;
+    }
+
+    .fan-cutout-action:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .fan-cutout-body {
+      min-height: 360px;
+      overflow: auto;
+      padding: 18px;
+    }
+
+    .fan-cutout-stage {
+      display: grid;
+      gap: 14px;
+      min-height: 100%;
+    }
+
+    .fan-cutout-help {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .fan-cutout-dropzone {
+      display: grid;
+      place-items: center;
+      min-height: 300px;
+      border: 1px dashed #666;
+      background: var(--field);
+      color: var(--white);
+      cursor: pointer;
+      padding: 28px;
+      text-align: center;
+    }
+
+    .fan-cutout-dropzone.dragging,
+    .fan-cutout-dropzone:hover {
+      border-color: #f0f0f0;
+      background: #303030;
+    }
+
+    .fan-cutout-copy strong {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 16px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .fan-cutout-crop-frame {
+      position: relative;
+      display: inline-block;
+      justify-self: center;
+      max-width: 100%;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .fan-cutout-crop-frame img,
+    .fan-cutout-result {
+      display: block;
+      max-width: 100%;
+      max-height: calc(100vh - 230px);
+      width: auto;
+      height: auto;
+    }
+
+    .fan-cutout-crop-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .fan-cutout-loader,
+    .fan-cutout-preview {
+      display: grid;
+      place-items: center;
+      gap: 14px;
+      min-height: 330px;
+      border: 1px solid #373737;
+      background-color: #202020;
+      background-image:
+        linear-gradient(45deg, #2d2d2d 25%, transparent 25%),
+        linear-gradient(-45deg, #2d2d2d 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #2d2d2d 75%),
+        linear-gradient(-45deg, transparent 75%, #2d2d2d 75%);
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+      background-size: 20px 20px;
+      text-align: center;
+    }
+
+    .fan-cutout-loader-gif {
+      width: min(360px, 82vw);
+      height: auto;
+      max-height: min(480px, 52vh);
+      object-fit: contain;
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+
+    .fan-cutout-mask-toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .fan-cutout-mask-tool {
+      border: 1px solid #3d3d3d;
+      background: #202020;
+      color: #f3f3f3;
+      padding: 8px 12px;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .fan-cutout-mask-tool.active {
+      border-color: #f0f0f0;
+      background: #f0f0f0;
+      color: #101010;
+    }
+
+    .fan-cutout-mask-wrap {
+      position: relative;
+      display: grid;
+      justify-self: center;
+      max-width: 100%;
+      cursor: crosshair;
+    }
+
+    .fan-cutout-mask-wrap canvas {
+      grid-area: 1 / 1;
+      display: block;
+      max-width: 100%;
+      max-height: calc(100vh - 320px);
+      pointer-events: none;
+    }
+
+    @media (max-height: 720px) {
+      .canvas-wrap {
+        padding: 24px;
+      }
+    }
+
+    .controls-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .controls-header .brand {
+      margin: 0;
+    }
+
+    .controls-collapse-toggle {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      html {
+        overflow: auto;
+      }
+
+      body {
+        min-width: 0;
+        overflow: auto;
+      }
+
+      :root {
+        --poster-width: min(calc(100vw - 24px), calc(100dvh * 3768 / 4797));
+      }
+
+      .controls-collapse-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        min-height: 44px;
+        padding: 0 12px;
+        border: 1px solid #555;
+        border-radius: 0;
+        background: #333;
+        color: var(--white);
+        cursor: pointer;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .controls-collapse-toggle:hover {
+        background: #444;
+        border-color: #666;
+      }
+
+      .controls-header {
+        margin-bottom: 0;
+        padding-bottom: 14px;
+        border-bottom: 1px solid #303030;
+      }
+
+      .app {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        height: 100dvh;
+        min-height: 100dvh;
+        overflow: hidden;
+      }
+
+      .app.panel-collapsed .controls {
+        max-height: 52px;
+        overflow: hidden;
+      }
+
+      .resize-handle {
+        display: none;
+      }
+
+      .controls {
+        position: static;
+        width: 100%;
+        flex: 0 0 auto;
+        max-height: 42vh;
+        overflow-y: auto;
+        padding: 16px;
+        border-right: 0;
+        border-bottom: 1px solid #303030;
+        transition: max-height 0.25s ease;
+      }
+
+      .uploads-section--hero {
+        margin: 0;
+        padding: 0 0 4px;
+      }
+
+      .canvas-wrap {
+        flex: 1 1 auto;
+        min-height: 0;
+        min-width: 0;
+        max-width: none;
+        width: 100%;
+        overflow: auto;
+        padding: 12px;
+        height: auto;
+      }
+
+      .poster-shell {
+        width: min(var(--poster-width), 720px);
+        min-width: 280px;
+      }
+
+      .fan-cutout-modal {
+        padding: 12px;
+      }
+
+      .fan-cutout-dialog {
+        width: 100%;
+        max-height: calc(100dvh - 24px);
+      }
+
+      .fan-cutout-body {
+        min-height: 240px;
+        padding: 14px;
+      }
+
+      .fan-cutout-footer {
+        flex-wrap: wrap;
+        justify-content: stretch;
+      }
+
+      .fan-cutout-footer .fan-cutout-action {
+        flex: 1 1 auto;
+        min-height: 44px;
+      }
+
+      .fan-cutout-mask-wrap canvas {
+        max-height: calc(100dvh - 280px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app" id="app">
+    <aside class="controls" id="controls-panel" aria-label="Poster controls">
+      <div class="controls-header">
+        <h1 class="brand">Poster Controls</h1>
+        <button class="controls-collapse-toggle" id="controls-collapse-toggle" type="button" aria-expanded="true" aria-controls="controls-panel">Collapse</button>
+      </div>
+
+      <section class="section uploads-section uploads-section--hero">
+        <h2 class="section-title">Hero Cutout</h2>
+
+        <div class="upload-slot upload-slot--hero" data-fan-panel="player">
+          <img class="thumb" id="thumb-player" src="img/player-cutout-asset.png" alt="Hero cutout preview">
+          <div>
+            <div class="slot-name">Hero cutout</div>
+            <button type="button" class="upload-button upload-trigger" data-target="player" data-thumb="thumb-player">Upload Image</button>
+          </div>
+          <div class="image-controls">
+            <label class="flip-control"><input class="fan-flip" type="checkbox" data-target="player"> Flip</label>
+            <label class="image-control-row">X <input class="fan-range" type="range" min="-80" max="-20" step="0.5" value="-50" data-target="player" data-prop="--fan-x" data-kind="offset"></label>
+            <label class="image-control-row">Y <input class="fan-range" type="range" min="-100" max="0" step="0.5" value="-50" data-target="player" data-prop="--fan-y" data-kind="offset-y"></label>
+            <label class="image-control-row">Rotate <input class="fan-range" type="range" min="-20" max="20" step="0.5" value="0" data-target="player" data-prop="--fan-rot" data-kind="angle"></label>
+            <label class="image-control-row">Size <input class="fan-range" type="range" min="5" max="300" step="1" value="100" data-target="player" data-prop="--fan-scale" data-kind="scale"></label>
+          </div>
+          <div class="control-reset-wrap">
+            <button type="button" class="control-reset-link" id="reset-player-controls">Reset</button>
+          </div>
+          <div class="secondary-action-wrap full-width">
+            <button class="upload-button secondary-action" id="open-hero-cutout-workspace" type="button">Upload & Create My Cutout</button>
+          </div>
+        </div>
+      </section>
+
+      <hr class="panel-divider" aria-hidden="true">
+
+      <section class="section uploads-section uploads-section--fans">
+        <h2 class="section-title">Fan Cutouts</h2>
+
+        <div class="upload-slot" data-fan-panel="fan-top-left">
+          <img class="thumb" id="thumb-fan-top-left" src="img/figure-arm-up.svg" alt="Fan image 1 preview">
+          <div>
+            <div class="slot-name">Fan image 1</div>
+            <button type="button" class="upload-button upload-trigger" data-target="fan-top-left" data-thumb="thumb-fan-top-left">Upload Image</button>
+          </div>
+          <div class="image-controls">
+            <label class="flip-control"><input class="fan-flip" type="checkbox" data-target="fan-top-left"> Flip</label>
+            <label class="image-control-row">X <input class="fan-range" type="range" min="-12" max="32" step="0.5" value="14" data-target="fan-top-left" data-prop="--fan-x" data-kind="offset"></label>
+            <label class="image-control-row">Y <input class="fan-range" type="range" min="-60" max="60" step="0.5" value="-8" data-target="fan-top-left" data-prop="--fan-y" data-kind="offset-y"></label>
+            <label class="image-control-row">Rotate <input class="fan-range" type="range" min="-20" max="20" step="0.5" value="-2" data-target="fan-top-left" data-prop="--fan-rot" data-kind="angle"></label>
+            <label class="image-control-row">Size <input class="fan-range" type="range" min="5" max="300" step="1" value="100" data-target="fan-top-left" data-prop="--fan-scale" data-kind="scale"></label>
+            <label class="image-control-row">Exposure <input class="fan-range" type="range" min="25" max="200" step="1" value="100" data-target="fan-top-left" data-prop="--fan-exposure" data-kind="exposure"></label>
+            <label class="image-control-row">Contrast <input class="fan-range" type="range" min="25" max="200" step="1" value="100" data-target="fan-top-left" data-prop="--fan-contrast" data-kind="contrast"></label>
+          </div>
+          <div class="control-reset-wrap">
+            <button type="button" class="control-reset-link fan-reset-link" data-reset-fan="fan-top-left">Reset</button>
+          </div>
+          <div class="fan-cutout-placeholder-wrap">
+            <button class="upload-button secondary-action fan-cutout-placeholder" type="button">Upload & Create My Cutout</button>
+          </div>
+        </div>
+
+        <div class="upload-slot" data-fan-panel="fan-bottom-left">
+          <img class="thumb" id="thumb-fan-bottom-left" src="img/figure-clap.svg" alt="Fan image 2 preview">
+          <div>
+            <div class="slot-name">Fan image 2</div>
+            <button type="button" class="upload-button upload-trigger" data-target="fan-bottom-left" data-thumb="thumb-fan-bottom-left">Upload Image</button>
+          </div>
+          <div class="image-controls">
+            <label class="flip-control"><input class="fan-flip" type="checkbox" data-target="fan-bottom-left"> Flip</label>
+            <label class="image-control-row">X <input class="fan-range" type="range" min="-12" max="35" step="0.5" value="31.9" data-target="fan-bottom-left" data-prop="--fan-x" data-kind="offset"></label>
+            <label class="image-control-row">Y <input class="fan-range" type="range" min="-60" max="60" step="0.5" value="-14.6" data-target="fan-bottom-left" data-prop="--fan-y" data-kind="offset-y"></label>
+            <label class="image-control-row">Rotate <input class="fan-range" type="range" min="-20" max="20" step="0.5" value="-11" data-target="fan-bottom-left" data-prop="--fan-rot" data-kind="angle"></label>
+            <label class="image-control-row">Size <input class="fan-range" type="range" min="5" max="300" step="1" value="83" data-target="fan-bottom-left" data-prop="--fan-scale" data-kind="scale"></label>
+            <label class="image-control-row">Exposure <input class="fan-range" type="range" min="25" max="200" step="1" value="100" data-target="fan-bottom-left" data-prop="--fan-exposure" data-kind="exposure"></label>
+            <label class="image-control-row">Contrast <input class="fan-range" type="range" min="25" max="200" step="1" value="100" data-target="fan-bottom-left" data-prop="--fan-contrast" data-kind="contrast"></label>
+          </div>
+          <div class="control-reset-wrap">
+            <button type="button" class="control-reset-link fan-reset-link" data-reset-fan="fan-bottom-left">Reset</button>
+          </div>
+          <div class="fan-cutout-placeholder-wrap">
+            <button class="upload-button secondary-action fan-cutout-placeholder" type="button">Create My Fan Cutout</button>
+          </div>
+        </div>
+
+        <div class="upload-slot" data-fan-panel="fan-top-right">
+          <img class="thumb" id="thumb-fan-top-right" src="img/figure-excited.svg" alt="Fan image 3 preview">
+          <div>
+            <div class="slot-name">Fan image 3</div>
+            <button type="button" class="upload-button upload-trigger" data-target="fan-top-right" data-thumb="thumb-fan-top-right">Upload Image</button>
+          </div>
+          <div class="image-controls">
+            <label class="flip-control"><input class="fan-flip" type="checkbox" data-target="fan-top-right"> Flip</label>
+            <label class="image-control-row">X <input class="fan-range" type="range" min="-35" max="12" step="0.5" value="-32" data-target="fan-top-right" data-prop="--fan-x" data-kind="offset"></label>
+            <label class="image-control-row">Y <input class="fan-range" type="range" min="-60" max="60" step="0.5" value="-15.8" data-target="fan-top-right" data-prop="--fan-y" data-kind="offset-y"></label>
+            <label class="image-control-row">Rotate <input class="fan-range" type="range" min="-20" max="20" step="0.5" value="2.5" data-target="fan-top-right" data-prop="--fan-rot" data-kind="angle"></label>
+            <label class="image-control-row">Size <input class="fan-range" type="range" min="5" max="300" step="1" value="120" data-target="fan-top-right" data-prop="--fan-scale" data-kind="scale"></label>
+            <label class="image-control-row">Exposure <input class="fan-range" type="range" min="25" max="200" step="1" value="100" data-target="fan-top-right" data-prop="--fan-exposure" data-kind="exposure"></label>
+            <label class="image-control-row">Contrast <input class="fan-range" type="range" min="25" max="200" step="1" value="100" data-target="fan-top-right" data-prop="--fan-contrast" data-kind="contrast"></label>
+          </div>
+          <div class="control-reset-wrap">
+            <button type="button" class="control-reset-link fan-reset-link" data-reset-fan="fan-top-right">Reset</button>
+          </div>
+          <div class="fan-cutout-placeholder-wrap">
+            <button class="upload-button secondary-action fan-cutout-placeholder" type="button">Create My Fan Cutout</button>
+          </div>
+        </div>
+
+        <div class="upload-slot" data-fan-panel="fan-bottom-right">
+          <img class="thumb" id="thumb-fan-bottom-right" src="img/figure-tall.svg" alt="Fan image 4 preview">
+          <div>
+            <div class="slot-name">Fan image 4</div>
+            <button type="button" class="upload-button upload-trigger" data-target="fan-bottom-right" data-thumb="thumb-fan-bottom-right">Upload Image</button>
+          </div>
+          <div class="image-controls">
+            <label class="flip-control"><input class="fan-flip" type="checkbox" data-target="fan-bottom-right"> Flip</label>
+            <label class="image-control-row">X <input class="fan-range" type="range" min="-35" max="12" step="0.5" value="-28.3" data-target="fan-bottom-right" data-prop="--fan-x" data-kind="offset"></label>
+            <label class="image-control-row">Y <input class="fan-range" type="range" min="-60" max="60" step="0.5" value="-8.6" data-target="fan-bottom-right" data-prop="--fan-y" data-kind="offset-y"></label>
+            <label class="image-control-row">Rotate <input class="fan-range" type="range" min="-20" max="20" step="0.5" value="10" data-target="fan-bottom-right" data-prop="--fan-rot" data-kind="angle"></label>
+            <label class="image-control-row">Size <input class="fan-range" type="range" min="5" max="300" step="1" value="115" data-target="fan-bottom-right" data-prop="--fan-scale" data-kind="scale"></label>
+            <label class="image-control-row">Exposure <input class="fan-range" type="range" min="25" max="200" step="1" value="100" data-target="fan-bottom-right" data-prop="--fan-exposure" data-kind="exposure"></label>
+            <label class="image-control-row">Contrast <input class="fan-range" type="range" min="25" max="200" step="1" value="100" data-target="fan-bottom-right" data-prop="--fan-contrast" data-kind="contrast"></label>
+          </div>
+          <div class="control-reset-wrap">
+            <button type="button" class="control-reset-link fan-reset-link" data-reset-fan="fan-bottom-right">Reset</button>
+          </div>
+          <div class="fan-cutout-placeholder-wrap">
+            <button class="upload-button secondary-action fan-cutout-placeholder" type="button">Create My Fan Cutout</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2 class="section-title">Editable Text</h2>
+
+        <label class="field-group">
+          <span class="field-label">Emphasis phrase (optional)</span>
+          <input class="text-input" id="subline-emphasis-input" type="text" value="SCREAMING" autocomplete="off" spellcheck="false">
+        </label>
+      </section>
+
+      <section class="section">
+        <h2 class="section-title">Export</h2>
+        <button class="export-button" id="export-button" type="button">Export as PNG</button>
+      </section>
+    </aside>
+
+    <div class="resize-handle" id="resize-handle" aria-hidden="true"></div>
+
+    <section class="canvas-wrap" aria-label="Live poster canvas">
+      <div class="poster-shell">
+        <div class="poster" id="poster">
+          <img class="poster-layer poster-bg" src="img/poster-bg.png" alt="">
+
+          <div class="fan-layer" aria-hidden="true">
+            <img class="fan top-left" id="fan-top-left" src="img/figure-arm-up.svg" alt="" draggable="false">
+            <img class="fan bottom-left" id="fan-bottom-left" src="img/figure-clap.svg" alt="" draggable="false">
+            <img class="fan top-right" id="fan-top-right" src="img/figure-excited.svg" alt="" draggable="false">
+            <img class="fan bottom-right" id="fan-bottom-right" src="img/figure-tall.svg" alt="" draggable="false">
+          </div>
+
+          <img class="poster-layer fan-blue-brush" src="img/blue-brush-overlay.png" alt="" aria-hidden="true">
+
+          <div class="poster-layer display-type" aria-hidden="true">
+            <img class="display-digit" src="img/1-grain.png" alt="">
+            <img class="display-digit" src="img/9-grain.png" alt="">
+            <img class="display-digit" src="img/6-grain.png" alt="">
+            <img class="display-digit" src="img/7grain.png" alt="">
+          </div>
+          <img class="poster-layer leaf" src="img/grunge-leaf-logo-shape-asset.png" alt="">
+          <img class="poster-layer player" id="player" src="img/player-cutout-asset.png" alt="">
+
+          <div class="subline">
+            <span id="subline-main-prefix">WE'VE BEEN</span>
+            <strong id="subline-emphasis-text">SCREAMING</strong>
+            <span id="subline-main-suffix">TOGETHER.</span>
+          </div>
+
+          <footer class="footer">
+            <div class="footer-text">
+              <div class="date-line" id="date-line">OCT 8, 2026</div>
+              <div class="season-line" id="season-line">SEASON STARTS NOW.</div>
+            </div>
+            <img class="qr" src="img/qr-code-asset.png" alt="">
+          </footer>
+
+          <div class="fan-selection-frame" id="fan-selection-frame" hidden aria-hidden="true"></div>
+
+          <button class="fan-asset-handle fan-asset-rotate-handle" id="fan-asset-rotate-handle" type="button" aria-label="Rotate selected image" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 12a9 9 0 1 1-3-6.7"></path>
+              <polyline points="21 3 21 9 15 9"></polyline>
+            </svg>
+          </button>
+          <button class="fan-asset-handle fan-asset-resize-handle" id="fan-asset-resize-handle" type="button" aria-label="Resize selected image" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <polyline points="9 21 3 21 3 15"></polyline>
+              <line x1="21" y1="3" x2="14" y2="10"></line>
+              <line x1="3" y1="21" x2="10" y2="14"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <input class="file-input-offscreen" id="shared-upload-input" type="file" accept="image/*" tabindex="-1" aria-hidden="true">
+
+  <div class="fan-cutout-modal" id="fan-cutout-modal" hidden>
+    <div class="fan-cutout-dialog" role="dialog" aria-modal="true" aria-labelledby="fan-cutout-title">
+      <header class="fan-cutout-header">
+        <h2 class="fan-cutout-title" id="fan-cutout-title">Create Fan Cutout</h2>
+        <button class="fan-cutout-close" id="fan-cutout-close" type="button" aria-label="Close fan cutout tool">Close</button>
+      </header>
+      <div class="fan-cutout-body" id="fan-cutout-body"></div>
+      <footer class="fan-cutout-footer" id="fan-cutout-footer"></footer>
+    </div>
+  </div>
+
+  <script>
+    const HERO_CUTOUT_HANDOFF_KEY = 'since67:heroCutoutResult';
+    const root = document.documentElement;
+    const handle = document.getElementById('resize-handle');
+    const poster = document.getElementById('poster');
+    const sublineEmphasisInput = document.getElementById('subline-emphasis-input');
+    const sublineMainPrefix = document.getElementById('subline-main-prefix');
+    const sublineEmphasisText = document.getElementById('subline-emphasis-text');
+    const sublineMainSuffix = document.getElementById('subline-main-suffix');
+    const dateLine = document.getElementById('date-line');
+    const seasonLine = document.getElementById('season-line');
+    const exportButton = document.getElementById('export-button');
+    const openHeroCutoutWorkspaceButton = document.getElementById('open-hero-cutout-workspace');
+    const playerImage = document.getElementById('player');
+    const playerThumb = document.getElementById('thumb-player');
+    const resetPlayerControlsButton = document.getElementById('reset-player-controls');
+    const app = document.getElementById('app');
+    const controlsPanel = document.getElementById('controls-panel');
+    const canvasWrap = document.querySelector('.canvas-wrap');
+    const controlsCollapseToggle = document.getElementById('controls-collapse-toggle');
+    const MOBILE_BREAKPOINT = 768;
+    const mobileMediaQuery = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`);
+    const sharedUploadInput = document.getElementById('shared-upload-input');
+    let savedUploadScroll = null;
+    let uploadPickerOpen = false;
+    const ORIGINAL_PLAYER_SRC = 'img/player-cutout-asset.png';
+    const ORIGINAL_FAN_SRC = {
+      'fan-top-left': 'img/figure-arm-up.svg',
+      'fan-bottom-left': 'img/figure-clap.svg',
+      'fan-top-right': 'img/figure-excited.svg',
+      'fan-bottom-right': 'img/figure-tall.svg'
+    };
+    const FAN_INLINE_STYLE_PROPS = [
+      '--fan-x',
+      '--fan-y',
+      '--fan-rot',
+      '--fan-scale',
+      '--fan-flip',
+      '--fan-upload-grayscale',
+      '--fan-exposure',
+      '--fan-contrast'
+    ];
+    const displayDigits = [...document.querySelectorAll('.display-digit')];
+    const fixedSublinePrefix = "WE'VE BEEN";
+    const fixedSublineSuffix = 'TOGETHER.';
+    const fixedDateLine = 'OCT 8, 2026';
+    const fixedSeasonLine = 'SEASON STARTS NOW.';
+    const fanCutoutModal = document.getElementById('fan-cutout-modal');
+    const fanCutoutBody = document.getElementById('fan-cutout-body');
+    const fanCutoutFooter = document.getElementById('fan-cutout-footer');
+    const fanCutoutClose = document.getElementById('fan-cutout-close');
+    let fanRemoveBackgroundFn = null;
+    let fanRemoveBackgroundWarmup = null;
+    let fanCutoutRunId = 0;
+    const FAN_CUTOUT_DEBUG = false;
+    const FAN_CUTOUT_SOURCE_MAX_EDGE = 2200;
+    const FAN_CUTOUT_MODEL_MAX_EDGE = 1280;
+    const FAN_CUTOUT_BG_CONFIG = {
+      model: 'medium',
+      output: {
+        format: 'image/png',
+        type: 'mask'
+      }
+    };
+    const fanCutoutState = {
+      stage: 'upload',
+      targetId: '',
+      thumbId: '',
+      sourceFile: null,
+      sourceUrl: '',
+      sourceImage: null,
+      sourceWidth: 0,
+      sourceHeight: 0,
+      crop: null,
+      croppedBlob: null,
+      modelBlob: null,
+      croppedUrl: '',
+      cutoutBlob: null,
+      cutoutUrl: '',
+      maskSourceImage: null,
+      maskOverlayCanvas: null,
+      maskMode: 'add'
+    };
+
+    function updatePosterText() {
+      const emphasisRaw = sublineEmphasisInput.value.trim();
+      sublineMainPrefix.textContent = fixedSublinePrefix;
+      sublineEmphasisText.textContent = emphasisRaw;
+      sublineMainSuffix.textContent = fixedSublineSuffix;
+
+      sublineEmphasisText.style.display = emphasisRaw ? 'inline' : 'none';
+      dateLine.textContent = fixedDateLine;
+      seasonLine.textContent = fixedSeasonLine;
+    }
+
+    function initializeDisplayDigitMotion() {
+      displayDigits.forEach((digit) => {
+        const amplitude = (Math.random() * 0.9 + 0.35).toFixed(2);
+        const duration = (Math.random() * 0.8 + 1.5).toFixed(2);
+        const delay = (Math.random() * -1.2).toFixed(2);
+        digit.style.setProperty('--jitter-amp', `${amplitude}%`);
+        digit.style.setProperty('--jitter-duration', `${duration}s`);
+        digit.style.setProperty('--jitter-delay', `${delay}s`);
+      });
+    }
+
+    const FAN_Y_LIMITS = { min: -60, max: 60 };
+    const FAN_SCALE_MIN = 0.05;
+    const FAN_HANDLE_SIDE_OUTSET = 0;
+    const FAN_SELECTION_PROPS = ['--fan-x', '--fan-y', '--fan-rot', '--fan-scale', '--fan-flip'];
+
+    function getFanXLimits(fanEl) {
+      if (!fanEl) {
+        return { min: -12, max: 12 };
+      }
+      if (fanEl.id === 'player') {
+        return { min: -80, max: -20 };
+      }
+      if (fanEl.classList.contains('top-left') || fanEl.classList.contains('bottom-left')) {
+        return { min: -12, max: 32 };
+      }
+      if (fanEl.classList.contains('top-right') || fanEl.classList.contains('bottom-right')) {
+        return { min: -32, max: 12 };
+      }
+      return { min: -12, max: 12 };
+    }
+
+    function clampFanX(fanEl, value) {
+      const lim = getFanXLimits(fanEl);
+      return Math.min(Math.max(value, lim.min), lim.max);
+    }
+
+    function getFanYLimits(fanEl) {
+      if (fanEl && fanEl.id === 'player') {
+        return { min: -100, max: 0 };
+      }
+      return FAN_Y_LIMITS;
+    }
+
+    function getSelectedFanElement() {
+      return document.querySelector('#poster .fan.is-selected, #poster .player.is-selected');
+    }
+
+    function getFanElementOffsetsToPoster(fanEl) {
+      let x = 0;
+      let y = 0;
+      let el = fanEl;
+      while (el && el !== poster) {
+        x += el.offsetLeft;
+        y += el.offsetTop;
+        el = el.offsetParent;
+      }
+      return { x, y };
+    }
+
+    function mapFanLocalPoint(fanEl, lx, ly) {
+      const { x: layoutX, y: layoutY } = getFanElementOffsetsToPoster(fanEl);
+      const w = fanEl.offsetWidth;
+      const h = fanEl.offsetHeight;
+      const ox = w / 2;
+      const oy = h / 2;
+      const transX = (parseFanCssNumber(fanEl, '--fan-x') / 100) * w;
+      const transY = (parseFanCssNumber(fanEl, '--fan-y') / 100) * h;
+      const rot = (parseFanCssNumber(fanEl, '--fan-rot') * Math.PI) / 180;
+      const scale = parseFanCssNumber(fanEl, '--fan-scale') || 1;
+      const flip = parseFanCssNumber(fanEl, '--fan-flip') || 1;
+      let px = (lx - ox) * flip * scale;
+      let py = (ly - oy) * scale;
+      const cos = Math.cos(rot);
+      const sin = Math.sin(rot);
+      const rx = px * cos - py * sin;
+      const ry = px * sin + py * cos;
+      return {
+        x: layoutX + ox + transX + rx,
+        y: layoutY + oy + transY + ry
+      };
+    }
+
+    function getFanTransformGeometry(fanEl) {
+      const w = fanEl.offsetWidth;
+      const h = fanEl.offsetHeight;
+      return {
+        center: mapFanLocalPoint(fanEl, w / 2, h / 2),
+        topLeft: mapFanLocalPoint(fanEl, 0, 0),
+        topRight: mapFanLocalPoint(fanEl, w, 0),
+        bottomLeft: mapFanLocalPoint(fanEl, 0, h),
+        bottomRight: mapFanLocalPoint(fanEl, w, h)
+      };
+    }
+
+    function isRightSideFan(fanEl) {
+      return fanEl.classList.contains('top-right') || fanEl.classList.contains('bottom-right');
+    }
+
+    function pickCornerByScreenX(corners, preferLeft) {
+      const sorted = [...corners].sort((a, b) => a.x - b.x);
+      return preferLeft ? sorted[0] : sorted[1];
+    }
+
+    function getFanHandleCorners(fanEl) {
+      const { topLeft, topRight, bottomLeft, bottomRight } = getFanTransformGeometry(fanEl);
+      const preferLeft = isRightSideFan(fanEl);
+      return {
+        rotateCorner: pickCornerByScreenX([topLeft, topRight], preferLeft),
+        resizeCorner: pickCornerByScreenX([bottomLeft, bottomRight], preferLeft),
+        useLeftSide: preferLeft
+      };
+    }
+
+    function normalizeVec(dx, dy) {
+      const len = Math.hypot(dx, dy);
+      if (len === 0) return { x: 0, y: 0 };
+      return { x: dx / len, y: dy / len };
+    }
+
+    function sameCorner(a, b) {
+      return Math.hypot(a.x - b.x, a.y - b.y) < 0.5;
+    }
+
+    function getCornerEdgeDirs(corner, geo) {
+      const { topLeft, topRight, bottomLeft, bottomRight } = geo;
+      if (sameCorner(corner, topLeft)) {
+        return {
+          down: normalizeVec(bottomLeft.x - topLeft.x, bottomLeft.y - topLeft.y),
+          up: normalizeVec(topLeft.x - bottomLeft.x, topLeft.y - bottomLeft.y),
+          side: normalizeVec(topLeft.x - topRight.x, topLeft.y - topRight.y)
+        };
+      }
+      if (sameCorner(corner, topRight)) {
+        return {
+          down: normalizeVec(bottomRight.x - topRight.x, bottomRight.y - topRight.y),
+          up: normalizeVec(topRight.x - bottomRight.x, topRight.y - bottomRight.y),
+          side: normalizeVec(topRight.x - topLeft.x, topRight.y - topLeft.y)
+        };
+      }
+      if (sameCorner(corner, bottomLeft)) {
+        return {
+          down: normalizeVec(bottomRight.x - bottomLeft.x, bottomRight.y - bottomLeft.y),
+          up: normalizeVec(topLeft.x - bottomLeft.x, topLeft.y - bottomLeft.y),
+          side: normalizeVec(bottomLeft.x - bottomRight.x, bottomLeft.y - bottomRight.y)
+        };
+      }
+      return {
+        down: normalizeVec(bottomRight.x - topRight.x, bottomRight.y - topRight.y),
+        up: normalizeVec(topRight.x - bottomRight.x, topRight.y - bottomRight.y),
+        side: normalizeVec(bottomRight.x - bottomLeft.x, bottomRight.y - bottomLeft.y)
+      };
+    }
+
+    function positionHandleAtCorner(corner, geo, sideOutset) {
+      const edges = getCornerEdgeDirs(corner, geo);
+      return {
+        x: corner.x + edges.side.x * sideOutset,
+        y: corner.y + edges.side.y * sideOutset
+      };
+    }
+
+    function syncFanSelectionFrame(fanEl) {
+      const frame = document.getElementById('fan-selection-frame');
+      if (!frame) return;
+      if (!fanEl || !fanEl.classList.contains('is-selected')) {
+        frame.classList.remove('is-visible');
+        frame.hidden = true;
+        return;
+      }
+      const { x, y } = getFanElementOffsetsToPoster(fanEl);
+      const cs = getComputedStyle(fanEl);
+      frame.style.left = `${x}px`;
+      frame.style.top = `${y}px`;
+      frame.style.width = `${fanEl.offsetWidth}px`;
+      frame.style.height = `${fanEl.offsetHeight}px`;
+      FAN_SELECTION_PROPS.forEach((prop) => {
+        frame.style.setProperty(prop, cs.getPropertyValue(prop).trim() || frame.style.getPropertyValue(prop));
+      });
+      frame.hidden = false;
+      frame.classList.add('is-visible');
+    }
+
+    function getFanTransformCenterScreen(fanEl) {
+      const posterRect = poster.getBoundingClientRect();
+      const { center } = getFanTransformGeometry(fanEl);
+      return {
+        x: posterRect.left + center.x,
+        y: posterRect.top + center.y
+      };
+    }
+
+    function positionFanAssetHandles(fanEl) {
+      const rotateHandle = document.getElementById('fan-asset-rotate-handle');
+      const resizeHandle = document.getElementById('fan-asset-resize-handle');
+      if (!rotateHandle || !resizeHandle) return;
+      if (!fanEl || !fanEl.classList.contains('is-selected')) {
+        [rotateHandle, resizeHandle].forEach((handle) => {
+          handle.classList.remove('is-visible');
+          handle.hidden = true;
+        });
+        resizeHandle.classList.remove('is-left-side');
+        return;
+      }
+      const geo = getFanTransformGeometry(fanEl);
+      const { rotateCorner, resizeCorner, useLeftSide } = getFanHandleCorners(fanEl);
+      const rotatePos = positionHandleAtCorner(rotateCorner, geo, FAN_HANDLE_SIDE_OUTSET);
+      const resizePos = positionHandleAtCorner(resizeCorner, geo, FAN_HANDLE_SIDE_OUTSET);
+      rotateHandle.style.left = `${rotatePos.x}px`;
+      rotateHandle.style.top = `${rotatePos.y}px`;
+      resizeHandle.style.left = `${resizePos.x}px`;
+      resizeHandle.style.top = `${resizePos.y}px`;
+      resizeHandle.classList.toggle('is-left-side', useLeftSide);
+      [rotateHandle, resizeHandle].forEach((handle) => {
+        handle.hidden = false;
+        handle.classList.add('is-visible');
+      });
+    }
+
+    function positionFanSelectionUI(fanEl) {
+      syncFanSelectionFrame(fanEl);
+      positionFanAssetHandles(fanEl);
+    }
+
+    function hideFanSelectionUI() {
+      const frame = document.getElementById('fan-selection-frame');
+      if (frame) {
+        frame.classList.remove('is-visible');
+        frame.hidden = true;
+      }
+      document.querySelectorAll('.fan-asset-handle').forEach((handle) => {
+        handle.classList.remove('is-visible', 'is-left-side');
+        handle.hidden = true;
+      });
+    }
+
+    function fanPointerAngleDeg(centerX, centerY, pointerX, pointerY) {
+      return Math.atan2(pointerY - centerY, pointerX - centerX) * (180 / Math.PI);
+    }
+
+    function setFanScale(fanEl, scale) {
+      const nextScale = Math.max(FAN_SCALE_MIN, scale);
+      fanEl.style.setProperty('--fan-scale', String(nextScale));
+      syncFanRangeInputs(fanEl);
+      if (fanEl.classList.contains('fan')) {
+        syncFanThumbVisual(fanEl);
+      }
+      if (fanEl.classList.contains('is-selected')) {
+        positionFanSelectionUI(fanEl);
+      }
+    }
+
+    function setFanRotation(fanEl, degrees) {
+      fanEl.style.setProperty('--fan-rot', `${degrees}deg`);
+      syncFanRangeInputs(fanEl);
+      if (fanEl.classList.contains('is-selected')) {
+        positionFanSelectionUI(fanEl);
+      }
+    }
+
+    function clampFanY(fanEl, value) {
+      const lim = getFanYLimits(fanEl);
+      return Math.min(Math.max(value, lim.min), lim.max);
+    }
+
+    function parseFanCssNumber(el, prop) {
+      const raw = getComputedStyle(el).getPropertyValue(prop).trim();
+      const n = parseFloat(raw);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function syncFanThumbVisual(fanEl) {
+      if (!fanEl || !fanEl.classList.contains('fan')) {
+        return;
+      }
+      const thumb = document.getElementById(`thumb-${fanEl.id}`);
+      if (!thumb) {
+        return;
+      }
+      const cs = getComputedStyle(fanEl);
+      const g = cs.getPropertyValue('--fan-upload-grayscale').trim() || '0';
+      const exp = cs.getPropertyValue('--fan-exposure').trim() || '1';
+      const con = cs.getPropertyValue('--fan-contrast').trim() || '1';
+      thumb.style.filter = `grayscale(${g}) brightness(${exp}) contrast(${con})`;
+    }
+
+    function syncFanRangeInputs(fanEl) {
+      const id = fanEl.id;
+      document.querySelectorAll(`.fan-range[data-target="${id}"]`).forEach((range) => {
+        const kind = range.dataset.kind;
+        const prop = range.dataset.prop;
+        if (kind === 'offset') {
+          range.value = String(parseFanCssNumber(fanEl, '--fan-x'));
+        } else if (kind === 'offset-y') {
+          range.value = String(parseFanCssNumber(fanEl, '--fan-y'));
+        } else if (kind === 'scale') {
+          const pct = Math.round(parseFanCssNumber(fanEl, '--fan-scale') * 100);
+          if (pct < Number(range.min)) range.min = String(pct);
+          if (pct > Number(range.max)) range.max = String(pct);
+          range.value = String(pct);
+        } else if (kind === 'angle') {
+          const rot = Math.round(parseFanCssNumber(fanEl, '--fan-rot') * 10) / 10;
+          if (rot < Number(range.min)) range.min = String(rot);
+          if (rot > Number(range.max)) range.max = String(rot);
+          range.value = String(rot);
+        } else if (kind === 'exposure') {
+          range.value = String(Math.round(parseFanCssNumber(fanEl, '--fan-exposure') * 100));
+        } else if (kind === 'contrast') {
+          range.value = String(Math.round(parseFanCssNumber(fanEl, '--fan-contrast') * 100));
+        }
+      });
+    }
+
+    function updateFanRange(range) {
+      const target = document.getElementById(range.dataset.target);
+
+      if (!target) {
+        return;
+      }
+
+      let value = Number(range.value);
+      let nextValue = `${value}%`;
+      if (range.dataset.kind === 'scale') {
+        nextValue = Math.max(FAN_SCALE_MIN, value / 100);
+      } else if (range.dataset.kind === 'angle') {
+        nextValue = `${value}deg`;
+      } else if (range.dataset.kind === 'offset') {
+        value = clampFanX(target, value);
+        range.value = String(value);
+        nextValue = `${value}%`;
+      } else if (range.dataset.kind === 'offset-y') {
+        value = clampFanY(target, value);
+        range.value = String(value);
+        nextValue = `${value}%`;
+      } else if (range.dataset.kind === 'exposure') {
+        value = Math.min(Math.max(value, 25), 200);
+        range.value = String(value);
+        nextValue = String(value / 100);
+      } else if (range.dataset.kind === 'contrast') {
+        value = Math.min(Math.max(value, 25), 200);
+        range.value = String(value);
+        nextValue = String(value / 100);
+      }
+      target.style.setProperty(range.dataset.prop, nextValue);
+      if (target.classList.contains('fan')) {
+        syncFanThumbVisual(target);
+      }
+      if (target.classList.contains('is-selected')) {
+        positionFanSelectionUI(target);
+      }
+    }
+
+    function updateFanFlip(checkbox) {
+      const target = document.getElementById(checkbox.dataset.target);
+
+      if (!target) {
+        return;
+      }
+
+      const nextFlip = checkbox.checked ? -1 : 1;
+      target.style.setProperty('--fan-flip', nextFlip);
+      if (target.classList.contains('is-selected')) {
+        positionFanSelectionUI(target);
+      }
+    }
+
+    function initializeFanControls() {
+      document.querySelectorAll('.fan-range').forEach((range) => {
+        updateFanRange(range);
+        range.addEventListener('input', () => updateFanRange(range));
+      });
+
+      document.querySelectorAll('.fan-flip').forEach((checkbox) => {
+        updateFanFlip(checkbox);
+        checkbox.addEventListener('change', () => updateFanFlip(checkbox));
+      });
+
+      document.querySelectorAll('#poster .fan').forEach(syncFanThumbVisual);
+    }
+
+    let fanPointerDrag = null;
+
+    function isMobileLayout() {
+      return mobileMediaQuery.matches;
+    }
+
+    function setControlsCollapsed(collapsed) {
+      if (!app || !controlsCollapseToggle) return;
+      app.classList.toggle('panel-collapsed', collapsed);
+      controlsCollapseToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      controlsCollapseToggle.textContent = collapsed ? 'Expand' : 'Collapse';
+    }
+
+    function toggleControlsCollapsed() {
+      if (!app) return;
+      setControlsCollapsed(!app.classList.contains('panel-collapsed'));
+    }
+
+    function expandControlsPanel() {
+      setControlsCollapsed(false);
+    }
+
+    function syncMobileControlsPanel() {
+      if (!isMobileLayout()) {
+        setControlsCollapsed(false);
+      }
+    }
+
+    function scrollPanelToActiveSlot(activeFanId) {
+      if (!activeFanId || !controlsPanel) return;
+      const slot = document.querySelector(`.upload-slot[data-fan-panel="${activeFanId}"]`);
+      if (!slot) return;
+      slot.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+
+    function syncFanPanelHighlight(activeFanId) {
+      document.querySelectorAll('.upload-slot[data-fan-panel]').forEach((slot) => {
+        slot.classList.toggle('is-fan-target-active', Boolean(activeFanId && slot.dataset.fanPanel === activeFanId));
+      });
+      if (activeFanId && isMobileLayout()) {
+        expandControlsPanel();
+      }
+      scrollPanelToActiveSlot(activeFanId);
+    }
+
+    function selectFanElement(fan) {
+      document.querySelectorAll('#poster .fan, #poster .player').forEach((el) => el.classList.remove('is-selected'));
+      fan.classList.add('is-selected');
+      syncFanPanelHighlight(fan.id);
+      positionFanSelectionUI(fan);
+    }
+
+    function clearFanSelection() {
+      document.querySelectorAll('#poster .fan, #poster .player').forEach((el) => {
+        el.classList.remove('is-selected');
+        el.classList.remove('dragging');
+      });
+      syncFanPanelHighlight(null);
+      hideFanSelectionUI();
+    }
+
+    function endFanPointerDrag(e) {
+      if (!fanPointerDrag) return;
+      if (e && e.pointerId != null && e.pointerId !== fanPointerDrag.pointerId) return;
+      if (fanPointerDrag.kind === 'move') {
+        fanPointerDrag.fan.classList.remove('dragging');
+      } else if ((fanPointerDrag.kind === 'resize' || fanPointerDrag.kind === 'rotate') && fanPointerDrag.handle) {
+        fanPointerDrag.handle.classList.remove('dragging');
+      }
+      try {
+        if (e && e.pointerId != null && fanPointerDrag.captureEl) {
+          fanPointerDrag.captureEl.releasePointerCapture(e.pointerId);
+        }
+      } catch (_) {}
+      fanPointerDrag = null;
+    }
+
+    function initializePanelThumbSelect() {
+      document.querySelectorAll('.upload-slot[data-fan-panel] .thumb').forEach((thumb) => {
+        thumb.tabIndex = 0;
+        thumb.setAttribute('role', 'button');
+        const slot = thumb.closest('[data-fan-panel]');
+        const slotName = slot && slot.querySelector('.slot-name');
+        if (slotName && !thumb.getAttribute('aria-label')) {
+          thumb.setAttribute('aria-label', `Select ${slotName.textContent.trim()} on poster`);
+        }
+
+        function activateFromPanelThumb() {
+          const panelSlot = thumb.closest('[data-fan-panel]');
+          if (!panelSlot) return;
+          const target = document.getElementById(panelSlot.dataset.fanPanel);
+          if (target) selectFanElement(target);
+        }
+
+        thumb.addEventListener('click', (event) => {
+          event.preventDefault();
+          activateFromPanelThumb();
+        });
+
+        thumb.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            activateFromPanelThumb();
+          }
+        });
+      });
+    }
+
+    function initializeFanAssetHandles() {
+      const resizeHandle = document.getElementById('fan-asset-resize-handle');
+      const rotateHandle = document.getElementById('fan-asset-rotate-handle');
+      if (!resizeHandle || !rotateHandle) return;
+
+      resizeHandle.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0) return;
+        const fan = getSelectedFanElement();
+        if (!fan) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const { x: centerX, y: centerY } = getFanTransformCenterScreen(fan);
+        const startDist = Math.max(Math.hypot(e.clientX - centerX, e.clientY - centerY), 1);
+        resizeHandle.setPointerCapture(e.pointerId);
+        resizeHandle.classList.add('dragging');
+        fanPointerDrag = {
+          kind: 'resize',
+          fan,
+          handle: resizeHandle,
+          captureEl: resizeHandle,
+          pointerId: e.pointerId,
+          centerX,
+          centerY,
+          startDist,
+          startScale: parseFanCssNumber(fan, '--fan-scale') || 1
+        };
+      });
+
+      resizeHandle.addEventListener('pointermove', (e) => {
+        if (!fanPointerDrag || fanPointerDrag.kind !== 'resize' || fanPointerDrag.pointerId !== e.pointerId) return;
+        const dist = Math.hypot(e.clientX - fanPointerDrag.centerX, e.clientY - fanPointerDrag.centerY);
+        const factor = Math.max(0.05, dist / fanPointerDrag.startDist);
+        setFanScale(fanPointerDrag.fan, fanPointerDrag.startScale * factor);
+      });
+
+      resizeHandle.addEventListener('pointerup', endFanPointerDrag);
+      resizeHandle.addEventListener('pointercancel', endFanPointerDrag);
+
+      rotateHandle.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0) return;
+        const fan = getSelectedFanElement();
+        if (!fan) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const { x: centerX, y: centerY } = getFanTransformCenterScreen(fan);
+        rotateHandle.setPointerCapture(e.pointerId);
+        rotateHandle.classList.add('dragging');
+        fanPointerDrag = {
+          kind: 'rotate',
+          fan,
+          handle: rotateHandle,
+          captureEl: rotateHandle,
+          pointerId: e.pointerId,
+          centerX,
+          centerY,
+          startPointerAngle: fanPointerAngleDeg(centerX, centerY, e.clientX, e.clientY),
+          startRot: parseFanCssNumber(fan, '--fan-rot')
+        };
+      });
+
+      rotateHandle.addEventListener('pointermove', (e) => {
+        if (!fanPointerDrag || fanPointerDrag.kind !== 'rotate' || fanPointerDrag.pointerId !== e.pointerId) return;
+        const currentAngle = fanPointerAngleDeg(
+          fanPointerDrag.centerX,
+          fanPointerDrag.centerY,
+          e.clientX,
+          e.clientY
+        );
+        const delta = currentAngle - fanPointerDrag.startPointerAngle;
+        setFanRotation(fanPointerDrag.fan, fanPointerDrag.startRot + delta);
+      });
+
+      rotateHandle.addEventListener('pointerup', endFanPointerDrag);
+      rotateHandle.addEventListener('pointercancel', endFanPointerDrag);
+    }
+
+    function initializeFanPointerDrag() {
+      document.querySelectorAll('#poster .fan, #poster .player').forEach((fan) => {
+        fan.addEventListener('pointerdown', (e) => {
+          if (e.button !== 0) return;
+          e.preventDefault();
+          e.stopPropagation();
+          selectFanElement(fan);
+          fan.setPointerCapture(e.pointerId);
+          fan.classList.add('dragging');
+          fanPointerDrag = {
+            kind: 'move',
+            fan,
+            captureEl: fan,
+            pointerId: e.pointerId,
+            lastX: e.clientX,
+            lastY: e.clientY
+          };
+        });
+
+        fan.addEventListener('pointermove', (e) => {
+          if (!fanPointerDrag || fanPointerDrag.kind !== 'move' || fanPointerDrag.pointerId !== e.pointerId || fanPointerDrag.fan !== fan) return;
+          const rect = poster.getBoundingClientRect();
+          const dx = e.clientX - fanPointerDrag.lastX;
+          const dy = e.clientY - fanPointerDrag.lastY;
+          fanPointerDrag.lastX = e.clientX;
+          fanPointerDrag.lastY = e.clientY;
+          const xLim = getFanXLimits(fan);
+          const spanX = xLim.max - xLim.min;
+          const yLim = getFanYLimits(fan);
+          const spanY = yLim.max - yLim.min;
+          let x = parseFanCssNumber(fan, '--fan-x') + (dx / rect.width) * spanX;
+          let y = parseFanCssNumber(fan, '--fan-y') + (dy / rect.height) * spanY;
+          x = clampFanX(fan, x);
+          y = clampFanY(fan, y);
+          fan.style.setProperty('--fan-x', `${x}%`);
+          fan.style.setProperty('--fan-y', `${y}%`);
+          syncFanRangeInputs(fan);
+          positionFanSelectionUI(fan);
+        });
+
+        fan.addEventListener('pointerup', endFanPointerDrag);
+        fan.addEventListener('pointercancel', endFanPointerDrag);
+      });
+
+      poster.addEventListener('pointerdown', (e) => {
+        if (!e.target.closest('.fan, .player, .fan-asset-handle')) {
+          clearFanSelection();
+        }
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          clearFanSelection();
+        }
+      });
+
+      window.addEventListener('resize', () => {
+        const selected = getSelectedFanElement();
+        if (selected) {
+          positionFanSelectionUI(selected);
+        }
+      });
+    }
+
+    function fanCutoutAction(label, className, onClick, disabled = false) {
+      const action = document.createElement('button');
+      action.type = 'button';
+      action.className = `fan-cutout-action ${className || ''}`.trim();
+      action.textContent = label;
+      action.disabled = disabled;
+      action.addEventListener('click', onClick);
+      return action;
+    }
+
+    function revokeFanCutoutUrl(key) {
+      if (fanCutoutState[key]) URL.revokeObjectURL(fanCutoutState[key]);
+      fanCutoutState[key] = '';
+    }
+
+    function resetFanCutoutState(keepTarget = false) {
+      fanCutoutRunId += 1;
+      revokeFanCutoutUrl('sourceUrl');
+      revokeFanCutoutUrl('croppedUrl');
+      revokeFanCutoutUrl('cutoutUrl');
+      fanCutoutState.stage = 'upload';
+      if (!keepTarget) {
+        fanCutoutState.targetId = '';
+        fanCutoutState.thumbId = '';
+      }
+      fanCutoutState.sourceFile = null;
+      fanCutoutState.sourceImage = null;
+      fanCutoutState.sourceWidth = 0;
+      fanCutoutState.sourceHeight = 0;
+      fanCutoutState.crop = null;
+      fanCutoutState.croppedBlob = null;
+      fanCutoutState.modelBlob = null;
+      fanCutoutState.cutoutBlob = null;
+      fanCutoutState.maskSourceImage = null;
+      fanCutoutState.maskOverlayCanvas = null;
+      fanCutoutState.maskMode = 'add';
+    }
+
+    function openFanCutoutModal(buttonEl) {
+      const slot = buttonEl.closest('[data-fan-panel]');
+      const uploadTrigger = slot && slot.querySelector('.upload-trigger');
+      if (!slot || !uploadTrigger) return;
+      resetFanCutoutState(false);
+      fanCutoutState.targetId = slot.dataset.fanPanel;
+      fanCutoutState.thumbId = uploadTrigger.dataset.thumb;
+      fanCutoutModal.hidden = false;
+      warmFanCutoutBackgroundRemoval();
+      renderFanCutoutUpload();
+    }
+
+    function closeFanCutoutModal() {
+      fanCutoutModal.hidden = true;
+      fanCutoutBody.innerHTML = '';
+      fanCutoutFooter.innerHTML = '';
+      resetFanCutoutState(false);
+    }
+
+    function setFanCutoutFooter(...actions) {
+      fanCutoutFooter.innerHTML = '';
+      fanCutoutFooter.append(...actions);
+    }
+
+    function renderFanCutoutUpload() {
+      fanCutoutState.stage = 'upload';
+      fanCutoutBody.innerHTML = `
+        <div class="fan-cutout-stage">
+          <p class="fan-cutout-help">Upload or drop a fan photo, then crop the subject before background removal.</p>
+          <div class="fan-cutout-dropzone" id="fan-cutout-dropzone" role="button" tabindex="0" aria-label="Upload fan image">
+            <input class="file-input" id="fan-cutout-file-input" type="file" accept="image/*">
+            <span class="fan-cutout-copy">
+              <strong>Drop image here</strong>
+              <span>Drag an image into this area, or use Choose image.</span>
+            </span>
+          </div>
+        </div>
+      `;
+      const input = document.getElementById('fan-cutout-file-input');
+      const dropzone = document.getElementById('fan-cutout-dropzone');
+      setFanCutoutFooter(
+        fanCutoutAction('Cancel', '', closeFanCutoutModal),
+        fanCutoutAction('Choose image', 'primary', () => {
+          input.value = '';
+          input.click();
+        })
+      );
+
+      function chooseFile(file) {
+        if (file && file.type.startsWith('image/')) {
+          loadFanCutoutSourceFile(file);
+        }
+      }
+
+      dropzone.addEventListener('click', (event) => {
+        if (event.target !== input) {
+          input.value = '';
+          input.click();
+        }
+      });
+      dropzone.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          input.value = '';
+          input.click();
+        }
+      });
+      input.addEventListener('change', () => chooseFile(input.files && input.files[0]));
+      dropzone.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        dropzone.classList.add('dragging');
+      });
+      dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragging'));
+      dropzone.addEventListener('drop', (event) => {
+        event.preventDefault();
+        dropzone.classList.remove('dragging');
+        chooseFile(event.dataTransfer.files && event.dataTransfer.files[0]);
+      });
+    }
+
+    async function loadFanCutoutSourceFile(file) {
+      const targetId = fanCutoutState.targetId;
+      const thumbId = fanCutoutState.thumbId;
+      resetFanCutoutState(true);
+      const loadRunId = fanCutoutRunId;
+      fanCutoutState.targetId = targetId;
+      fanCutoutState.thumbId = thumbId;
+      fanCutoutState.sourceFile = file;
+      fanCutoutState.sourceUrl = URL.createObjectURL(file);
+      fanCutoutState.sourceImage = await loadFanCutoutImage(fanCutoutState.sourceUrl);
+      if (loadRunId !== fanCutoutRunId || fanCutoutModal.hidden) return;
+      fanCutoutState.sourceWidth = fanCutoutState.sourceImage.naturalWidth;
+      fanCutoutState.sourceHeight = fanCutoutState.sourceImage.naturalHeight;
+      fanCutoutState.crop = null;
+      renderFanCutoutCrop();
+    }
+
+    function renderFanCutoutCrop() {
+      fanCutoutState.stage = 'crop';
+      fanCutoutBody.innerHTML = `
+        <div class="fan-cutout-stage">
+          <p class="fan-cutout-help">Drag over the image to keep just the fan area. You can redraw before clipping.</p>
+          <div class="fan-cutout-crop-frame" id="fan-cutout-crop-frame">
+            <img id="fan-cutout-crop-image" src="${fanCutoutState.sourceUrl}" alt="Uploaded fan image">
+            <canvas class="fan-cutout-crop-canvas" id="fan-cutout-crop-canvas"></canvas>
+          </div>
+        </div>
+      `;
+      const frame = document.getElementById('fan-cutout-crop-frame');
+      const image = document.getElementById('fan-cutout-crop-image');
+      const canvas = document.getElementById('fan-cutout-crop-canvas');
+      const clipButton = fanCutoutAction('Clip and remove background', 'primary', cropFanCutoutToBlob, !fanCutoutState.crop);
+      const cropUi = { frame, image, canvas, clipButton, dragging: false, start: null, draft: null };
+      setFanCutoutFooter(
+        fanCutoutAction('Back', '', renderFanCutoutUpload),
+        fanCutoutAction('Clear selection', '', () => {
+          fanCutoutState.crop = null;
+          cropUi.draft = null;
+          clipButton.disabled = true;
+          drawFanCutoutCrop(cropUi);
+        }),
+        clipButton
+      );
+
+      image.addEventListener('load', () => syncFanCutoutCropCanvas(cropUi));
+      syncFanCutoutCropCanvas(cropUi);
+      drawFanCutoutCrop(cropUi);
+      frame.addEventListener('pointerdown', (event) => beginFanCutoutCrop(event, cropUi));
+      frame.addEventListener('pointermove', (event) => moveFanCutoutCrop(event, cropUi));
+      frame.addEventListener('pointerup', (event) => endFanCutoutCrop(event, cropUi));
+      frame.addEventListener('pointercancel', (event) => endFanCutoutCrop(event, cropUi));
+    }
+
+    function syncFanCutoutCropCanvas(cropUi) {
+      const rect = cropUi.image.getBoundingClientRect();
+      cropUi.canvas.width = Math.round(rect.width);
+      cropUi.canvas.height = Math.round(rect.height);
+    }
+
+    function fanCutoutPointerPoint(event, cropUi) {
+      const rect = cropUi.image.getBoundingClientRect();
+      return {
+        x: Math.max(0, Math.min(rect.width, event.clientX - rect.left)),
+        y: Math.max(0, Math.min(rect.height, event.clientY - rect.top))
+      };
+    }
+
+    function normalizeFanCutoutRect(start, end) {
+      return {
+        x: Math.min(start.x, end.x),
+        y: Math.min(start.y, end.y),
+        width: Math.abs(end.x - start.x),
+        height: Math.abs(end.y - start.y)
+      };
+    }
+
+    function beginFanCutoutCrop(event, cropUi) {
+      event.preventDefault();
+      cropUi.frame.setPointerCapture(event.pointerId);
+      cropUi.dragging = true;
+      cropUi.start = fanCutoutPointerPoint(event, cropUi);
+      cropUi.draft = null;
+    }
+
+    function moveFanCutoutCrop(event, cropUi) {
+      if (!cropUi.dragging) return;
+      cropUi.draft = normalizeFanCutoutRect(cropUi.start, fanCutoutPointerPoint(event, cropUi));
+      drawFanCutoutCrop(cropUi);
+    }
+
+    function endFanCutoutCrop(event, cropUi) {
+      if (!cropUi.dragging) return;
+      cropUi.dragging = false;
+      const rect = cropUi.draft || normalizeFanCutoutRect(cropUi.start, fanCutoutPointerPoint(event, cropUi));
+      if (rect.width > 10 && rect.height > 10) {
+        fanCutoutState.crop = rect;
+        cropUi.clipButton.disabled = false;
+      }
+      cropUi.draft = null;
+      drawFanCutoutCrop(cropUi);
+    }
+
+    function drawFanCutoutCrop(cropUi) {
+      syncFanCutoutCropCanvas(cropUi);
+      const ctx = cropUi.canvas.getContext('2d', { willReadFrequently: true });
+      const rect = cropUi.draft || fanCutoutState.crop;
+      ctx.clearRect(0, 0, cropUi.canvas.width, cropUi.canvas.height);
+      if (!rect) return;
+      const scaleX = fanCutoutState.sourceWidth / cropUi.canvas.width;
+      const scaleY = fanCutoutState.sourceHeight / cropUi.canvas.height;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fillRect(0, 0, cropUi.canvas.width, cropUi.canvas.height);
+      ctx.clearRect(rect.x, rect.y, rect.width, rect.height);
+      ctx.setLineDash([8, 5]);
+      ctx.lineDashOffset = -Date.now() / 80;
+      ctx.strokeStyle = '#E5FF00';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#E5FF00';
+      ctx.font = '700 12px Arial';
+      ctx.fillText(`${Math.round(rect.width * scaleX)} x ${Math.round(rect.height * scaleY)} px`, rect.x + 8, Math.max(18, rect.y - 8));
+    }
+
+    function fanCutoutTime(label, startTime) {
+      if (!FAN_CUTOUT_DEBUG || typeof performance === 'undefined') return;
+      const elapsed = Math.round(performance.now() - startTime);
+      console.log(`[fan cutout] ${label}: ${elapsed}ms`);
+    }
+
+    function updateFanCutoutStatus(title, detail = '') {
+      const titleEl = document.getElementById('fan-cutout-processing-title');
+      const detailEl = document.getElementById('fan-cutout-processing-detail');
+      if (titleEl) titleEl.textContent = title;
+      if (detailEl) detailEl.textContent = detail;
+    }
+
+    function fanCutoutScaledSize(width, height, maxEdge) {
+      const scale = Math.min(1, maxEdge / Math.max(width, height));
+      return {
+        width: Math.max(1, Math.round(width * scale)),
+        height: Math.max(1, Math.round(height * scale)),
+        scale
+      };
+    }
+
+    function drawScaledFanCutoutCrop(sx, sy, sw, sh, maxEdge) {
+      const size = fanCutoutScaledSize(sw, sh, maxEdge);
+      const canvas = document.createElement('canvas');
+      canvas.width = size.width;
+      canvas.height = size.height;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(fanCutoutState.sourceImage, sx, sy, sw, sh, 0, 0, size.width, size.height);
+      return canvas;
+    }
+
+    async function cropFanCutoutToBlob() {
+      if (!fanCutoutState.crop) return;
+      const startTime = performance.now();
+      const imageRect = document.getElementById('fan-cutout-crop-image').getBoundingClientRect();
+      const scaleX = fanCutoutState.sourceWidth / imageRect.width;
+      const scaleY = fanCutoutState.sourceHeight / imageRect.height;
+      const sx = Math.round(fanCutoutState.crop.x * scaleX);
+      const sy = Math.round(fanCutoutState.crop.y * scaleY);
+      const sw = Math.round(fanCutoutState.crop.width * scaleX);
+      const sh = Math.round(fanCutoutState.crop.height * scaleY);
+      const sourceCanvas = drawScaledFanCutoutCrop(sx, sy, sw, sh, FAN_CUTOUT_SOURCE_MAX_EDGE);
+      const modelCanvas = drawScaledFanCutoutCrop(sx, sy, sw, sh, FAN_CUTOUT_MODEL_MAX_EDGE);
+      fanCutoutState.croppedBlob = await fanCutoutCanvasToBlob(sourceCanvas);
+      fanCutoutState.modelBlob = await fanCutoutCanvasToBlob(modelCanvas);
+      revokeFanCutoutUrl('croppedUrl');
+      revokeFanCutoutUrl('cutoutUrl');
+      fanCutoutState.croppedUrl = URL.createObjectURL(fanCutoutState.croppedBlob);
+      fanCutoutState.cutoutBlob = null;
+      fanCutoutTime('crop optimization', startTime);
+      renderFanCutoutProcessing();
+    }
+
+    function renderFanCutoutProcessing() {
+      fanCutoutRunId += 1;
+      fanCutoutState.maskSourceImage = null;
+      fanCutoutState.maskOverlayCanvas = null;
+      fanCutoutState.stage = 'processing';
+      fanCutoutBody.innerHTML = `
+        <div class="fan-cutout-stage">
+          <p class="fan-cutout-help">Creating a high-quality transparent fan cutout in your browser. Large images are optimized first so detection stays fast.</p>
+          <div class="fan-cutout-loader">
+            <img class="fan-cutout-loader-gif" src="img/wol-final.gif" alt="" width="360" height="407" decoding="async" fetchpriority="high">
+            <strong id="fan-cutout-processing-title">Preparing model...</strong>
+            <p class="fan-cutout-help" id="fan-cutout-processing-detail">First run may download model assets; later cutouts should be much faster.</p>
+          </div>
+        </div>
+      `;
+      setFanCutoutFooter(
+        fanCutoutAction('Back', '', renderFanCutoutCrop),
+        fanCutoutAction('Cancel', '', closeFanCutoutModal)
+      );
+      runFanCutoutBackgroundRemoval();
+    }
+
+    async function runFanCutoutBackgroundRemoval() {
+      const runId = fanCutoutRunId;
+      const sourceBlob = fanCutoutState.croppedBlob;
+      const modelBlob = fanCutoutState.modelBlob || sourceBlob;
+      const startTime = performance.now();
+      try {
+        updateFanCutoutStatus('Preparing model...', 'Loading the background-removal model for this browser.');
+        const removeBackground = await loadFanCutoutBackgroundRemoval();
+        fanCutoutTime('model ready', startTime);
+        updateFanCutoutStatus('Detecting subject...', 'Running detection on an optimized copy of the crop.');
+        let modelResultBlob = null;
+        let resultKind = 'mask';
+        try {
+          modelResultBlob = await removeBackground(modelBlob, FAN_CUTOUT_BG_CONFIG);
+        } catch (maskError) {
+          resultKind = 'foreground';
+          modelResultBlob = await removeBackground(modelBlob, {
+            ...FAN_CUTOUT_BG_CONFIG,
+            output: {
+              ...FAN_CUTOUT_BG_CONFIG.output,
+              type: 'foreground'
+            }
+          });
+        }
+        fanCutoutTime('subject detection', startTime);
+        if (runId !== fanCutoutRunId || fanCutoutState.croppedBlob !== sourceBlob || fanCutoutState.stage !== 'processing') return;
+        updateFanCutoutStatus('Preparing refinement mask...', 'Upscaling the detected mask for manual polish.');
+        await prepareFanMaskRefinement(modelResultBlob, resultKind);
+        fanCutoutTime('mask preparation', startTime);
+        if (runId !== fanCutoutRunId || fanCutoutState.croppedBlob !== sourceBlob || fanCutoutState.stage !== 'processing') return;
+        renderFanMaskRefinement();
+      } catch (error) {
+        if (runId !== fanCutoutRunId || fanCutoutState.stage !== 'processing') return;
+        fanCutoutBody.innerHTML = `
+          <div class="fan-cutout-stage">
+            <div class="fan-cutout-loader">
+              <strong>Background removal failed</strong>
+              <p class="fan-cutout-help">${error && error.message ? error.message : 'Please try another image.'}</p>
+            </div>
+          </div>
+        `;
+        setFanCutoutFooter(
+          fanCutoutAction('Back', '', renderFanCutoutCrop),
+          fanCutoutAction('Cancel', '', closeFanCutoutModal)
+        );
+      }
+    }
+
+    async function loadFanCutoutBackgroundRemoval() {
+      if (fanRemoveBackgroundFn) return fanRemoveBackgroundFn;
+      if (fanRemoveBackgroundWarmup) return fanRemoveBackgroundWarmup;
+      fanRemoveBackgroundWarmup = import('https://esm.sh/@imgly/background-removal@1.4.5?bundle')
+        .then((module) => {
+          fanRemoveBackgroundFn = module.removeBackground || module.default;
+          return fanRemoveBackgroundFn;
+        })
+        .finally(() => {
+          fanRemoveBackgroundWarmup = null;
+        });
+      return fanRemoveBackgroundWarmup;
+    }
+
+    function warmFanCutoutBackgroundRemoval() {
+      if (!fanRemoveBackgroundFn && !fanRemoveBackgroundWarmup) {
+        fanRemoveBackgroundWarmup = import('https://esm.sh/@imgly/background-removal@1.4.5?bundle')
+          .then((module) => {
+            fanRemoveBackgroundFn = module.removeBackground || module.default;
+            return fanRemoveBackgroundFn;
+          })
+          .catch((error) => {
+            fanRemoveBackgroundWarmup = null;
+            throw error;
+          });
+      }
+      return fanRemoveBackgroundWarmup || Promise.resolve(fanRemoveBackgroundFn);
+    }
+
+    function fanMaskRemovalAlpha(data, index, resultKind, maskUsesAlpha) {
+      if (resultKind === 'mask') {
+        if (maskUsesAlpha) {
+          return 255 - data[index + 3];
+        }
+        const maskValue = Math.max(data[index], data[index + 1], data[index + 2]);
+        return 255 - maskValue;
+      }
+      return 255 - data[index + 3];
+    }
+
+    function fanMaskStats(data) {
+      let maxColor = 0;
+      let minAlpha = 255;
+      let maxAlpha = 0;
+      const stride = Math.max(4, Math.floor(data.length / 4000 / 4) * 4);
+      for (let i = 0; i < data.length; i += stride) {
+        maxColor = Math.max(maxColor, data[i], data[i + 1], data[i + 2]);
+        minAlpha = Math.min(minAlpha, data[i + 3]);
+        maxAlpha = Math.max(maxAlpha, data[i + 3]);
+      }
+      return { maxColor, minAlpha, maxAlpha };
+    }
+
+    function fanMaskUsesAlphaChannel(data) {
+      const stats = fanMaskStats(data);
+      return stats.maxColor < 8 && stats.maxAlpha > stats.minAlpha;
+    }
+
+    function effectiveFanMaskResultKind(data, resultKind) {
+      if (resultKind !== 'mask') return resultKind;
+      const stats = fanMaskStats(data);
+      const hasAlphaCutout = stats.maxAlpha > stats.minAlpha;
+      const hasColorImage = stats.maxColor > 8;
+      return hasAlphaCutout && hasColorImage ? 'foreground' : 'mask';
+    }
+
+    async function prepareFanMaskRefinement(modelResultBlob, resultKind = 'foreground') {
+      const modelUrl = URL.createObjectURL(modelResultBlob);
+      try {
+        const modelResultImage = await loadFanCutoutImage(modelUrl);
+        fanCutoutState.maskSourceImage = await loadFanCutoutImage(fanCutoutState.croppedUrl);
+        const width = fanCutoutState.maskSourceImage.naturalWidth;
+        const height = fanCutoutState.maskSourceImage.naturalHeight;
+        const modelCanvas = document.createElement('canvas');
+        modelCanvas.width = width;
+        modelCanvas.height = height;
+        const modelCtx = modelCanvas.getContext('2d', { willReadFrequently: true });
+        modelCtx.imageSmoothingEnabled = true;
+        modelCtx.imageSmoothingQuality = 'high';
+        modelCtx.drawImage(modelResultImage, 0, 0, width, height);
+        const modelData = modelCtx.getImageData(0, 0, width, height).data;
+        const effectiveResultKind = effectiveFanMaskResultKind(modelData, resultKind);
+        const maskUsesAlpha = effectiveResultKind === 'mask' && fanMaskUsesAlphaChannel(modelData);
+
+        const overlayCanvas = document.createElement('canvas');
+        overlayCanvas.width = width;
+        overlayCanvas.height = height;
+        const overlayCtx = overlayCanvas.getContext('2d', { willReadFrequently: true });
+        const overlayImage = overlayCtx.createImageData(width, height);
+
+        for (let i = 0; i < modelData.length; i += 4) {
+          const removal = fanMaskRemovalAlpha(modelData, i, effectiveResultKind, maskUsesAlpha);
+          overlayImage.data[i] = 255;
+          overlayImage.data[i + 1] = 0;
+          overlayImage.data[i + 2] = 0;
+          overlayImage.data[i + 3] = Math.round(removal * 0.9);
+        }
+
+        overlayCtx.putImageData(overlayImage, 0, 0);
+        fanCutoutState.maskOverlayCanvas = overlayCanvas;
+      } finally {
+        URL.revokeObjectURL(modelUrl);
+      }
+    }
+
+    function renderFanMaskRefinement() {
+      fanCutoutState.stage = 'mask';
+      fanCutoutBody.innerHTML = `
+        <div class="fan-cutout-stage">
+          <p class="fan-cutout-help">Red overlay marks removal. Draw a lasso around areas to add to or remove from the subject.</p>
+          <div class="fan-cutout-mask-toolbar" aria-label="Mask refinement tools">
+            <button type="button" class="fan-cutout-mask-tool ${fanCutoutState.maskMode === 'add' ? 'active' : ''}" data-mask-mode="add">Add to subject</button>
+            <button type="button" class="fan-cutout-mask-tool ${fanCutoutState.maskMode === 'remove' ? 'active' : ''}" data-mask-mode="remove">Remove from subject</button>
+          </div>
+          <div class="fan-cutout-mask-wrap" id="fan-cutout-mask-canvas-wrap">
+            <canvas id="fan-cutout-mask-source-canvas"></canvas>
+            <canvas id="fan-cutout-mask-overlay-canvas"></canvas>
+            <canvas id="fan-cutout-mask-selection-canvas"></canvas>
+          </div>
+        </div>
+      `;
+      setFanCutoutFooter(
+        fanCutoutAction('Back', '', () => {
+          fanCutoutState.maskSourceImage = null;
+          fanCutoutState.maskOverlayCanvas = null;
+          renderFanCutoutCrop();
+        }),
+        fanCutoutAction('Re-detect', '', () => {
+          revokeFanCutoutUrl('cutoutUrl');
+          fanCutoutState.cutoutBlob = null;
+          renderFanCutoutProcessing();
+        }),
+        fanCutoutAction('Confirm cutout', 'primary', confirmFanMaskCutout)
+      );
+      initializeFanMaskRefinement();
+    }
+
+    function initializeFanMaskRefinement() {
+      const sourceCanvas = document.getElementById('fan-cutout-mask-source-canvas');
+      const overlayCanvas = document.getElementById('fan-cutout-mask-overlay-canvas');
+      const selectionCanvas = document.getElementById('fan-cutout-mask-selection-canvas');
+      const wrap = document.getElementById('fan-cutout-mask-canvas-wrap');
+      if (!sourceCanvas || !overlayCanvas || !selectionCanvas || !wrap || !fanCutoutState.maskOverlayCanvas || !fanCutoutState.maskSourceImage) return;
+
+      const width = fanCutoutState.maskOverlayCanvas.width;
+      const height = fanCutoutState.maskOverlayCanvas.height;
+      [sourceCanvas, overlayCanvas, selectionCanvas].forEach((canvas) => {
+        canvas.width = width;
+        canvas.height = height;
+      });
+
+      sourceCanvas.getContext('2d', { willReadFrequently: true }).drawImage(fanCutoutState.maskSourceImage, 0, 0, width, height);
+      syncFanMaskOverlayCanvas();
+
+      fanCutoutBody.querySelectorAll('[data-mask-mode]').forEach((modeButton) => {
+        modeButton.addEventListener('click', () => {
+          fanCutoutState.maskMode = modeButton.dataset.maskMode;
+          fanCutoutBody.querySelectorAll('[data-mask-mode]').forEach((buttonEl) => {
+            buttonEl.classList.toggle('active', buttonEl === modeButton);
+          });
+        });
+      });
+
+      let lasso = null;
+      let animationFrame = null;
+      const startLasso = (event) => {
+        event.preventDefault();
+        const point = fanMaskPoint(event);
+        lasso = { points: [point], dashOffset: 0 };
+        drawFanMaskSelection(lasso);
+        animateFanMaskSelection();
+        window.addEventListener('mousemove', moveLasso);
+        window.addEventListener('mouseup', endLasso);
+      };
+      const moveLasso = (event) => {
+        if (!lasso) return;
+        event.preventDefault();
+        lasso.points.push(fanMaskPoint(event));
+      };
+      const endLasso = (event) => {
+        if (!lasso) return;
+        event.preventDefault();
+        lasso.points.push(fanMaskPoint(event));
+        const selection = lasso;
+        lasso = null;
+        if (animationFrame) {
+          cancelAnimationFrame(animationFrame);
+          animationFrame = null;
+        }
+        window.removeEventListener('mousemove', moveLasso);
+        window.removeEventListener('mouseup', endLasso);
+        applyFanMaskLasso(selection.points);
+        flashFanMaskSelection(selection.points);
+      };
+      const cancelLasso = () => {
+        lasso = null;
+        if (animationFrame) {
+          cancelAnimationFrame(animationFrame);
+          animationFrame = null;
+        }
+        window.removeEventListener('mousemove', moveLasso);
+        window.removeEventListener('mouseup', endLasso);
+        clearFanMaskSelection();
+      };
+      const touchFromEvent = (event, changed = false) => {
+        const touchList = changed ? event.changedTouches : event.touches;
+        const touch = touchList && touchList[0];
+        return touch ? { clientX: touch.clientX, clientY: touch.clientY, preventDefault: () => event.preventDefault() } : event;
+      };
+
+      function animateFanMaskSelection() {
+        if (!lasso) return;
+        lasso.dashOffset -= 1;
+        drawFanMaskSelection(lasso);
+        animationFrame = requestAnimationFrame(animateFanMaskSelection);
+      }
+
+      wrap.addEventListener('mousedown', startLasso);
+      wrap.addEventListener('mouseleave', () => {
+        if (!lasso) clearFanMaskSelection();
+      });
+      wrap.addEventListener('touchstart', (event) => startLasso(touchFromEvent(event)), { passive: false });
+      wrap.addEventListener('touchmove', (event) => moveLasso(touchFromEvent(event)), { passive: false });
+      wrap.addEventListener('touchend', (event) => endLasso(touchFromEvent(event, true)), { passive: false });
+      wrap.addEventListener('touchcancel', cancelLasso);
+    }
+
+    function syncFanMaskOverlayCanvas() {
+      const overlayCanvas = document.getElementById('fan-cutout-mask-overlay-canvas');
+      if (!overlayCanvas || !fanCutoutState.maskOverlayCanvas) return;
+      const ctx = overlayCanvas.getContext('2d', { willReadFrequently: true });
+      ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+      ctx.drawImage(fanCutoutState.maskOverlayCanvas, 0, 0);
+    }
+
+    function fanMaskPoint(event) {
+      const canvas = document.getElementById('fan-cutout-mask-overlay-canvas');
+      if (!canvas) return { x: 0, y: 0 };
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: ((event.clientX - rect.left) / rect.width) * canvas.width,
+        y: ((event.clientY - rect.top) / rect.height) * canvas.height
+      };
+    }
+
+    function fanMaskLassoPath(points) {
+      const path = new Path2D();
+      if (!points.length) return path;
+      path.moveTo(points[0].x, points[0].y);
+      points.slice(1).forEach((point) => path.lineTo(point.x, point.y));
+      path.closePath();
+      return path;
+    }
+
+    function drawFanMaskSelection(lasso) {
+      const selectionCanvas = document.getElementById('fan-cutout-mask-selection-canvas');
+      if (!selectionCanvas) return;
+      const ctx = selectionCanvas.getContext('2d', { willReadFrequently: true });
+      ctx.clearRect(0, 0, selectionCanvas.width, selectionCanvas.height);
+      if (!lasso.points.length) return;
+      if (lasso.points.length >= 2) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(lasso.points[0].x, lasso.points[0].y);
+        lasso.points.slice(1).forEach((point) => ctx.lineTo(point.x, point.y));
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.9)';
+        ctx.fill();
+        ctx.restore();
+      }
+      ctx.save();
+      ctx.lineWidth = 1.5;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#ffffff';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+      ctx.shadowBlur = 3;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.setLineDash([8, 5]);
+      ctx.lineDashOffset = lasso.dashOffset;
+      ctx.beginPath();
+      ctx.moveTo(lasso.points[0].x, lasso.points[0].y);
+      lasso.points.slice(1).forEach((point) => ctx.lineTo(point.x, point.y));
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function flashFanMaskSelection(points) {
+      const selectionCanvas = document.getElementById('fan-cutout-mask-selection-canvas');
+      if (!selectionCanvas) return;
+      const ctx = selectionCanvas.getContext('2d', { willReadFrequently: true });
+      const path = fanMaskLassoPath(points);
+      ctx.save();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.fill(path);
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = '#ffffff';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+      ctx.shadowBlur = 3;
+      ctx.setLineDash([8, 5]);
+      ctx.stroke(path);
+      ctx.restore();
+      window.setTimeout(clearFanMaskSelection, 150);
+    }
+
+    function clearFanMaskSelection() {
+      const selectionCanvas = document.getElementById('fan-cutout-mask-selection-canvas');
+      if (!selectionCanvas) return;
+      selectionCanvas.getContext('2d', { willReadFrequently: true }).clearRect(0, 0, selectionCanvas.width, selectionCanvas.height);
+    }
+
+    function applyFanMaskLasso(points) {
+      if (!fanCutoutState.maskOverlayCanvas || points.length < 3) return;
+      const path = fanMaskLassoPath(points);
+      const ctx = fanCutoutState.maskOverlayCanvas.getContext('2d', { willReadFrequently: true });
+      const imageData = ctx.getImageData(0, 0, fanCutoutState.maskOverlayCanvas.width, fanCutoutState.maskOverlayCanvas.height);
+      for (let y = 0; y < fanCutoutState.maskOverlayCanvas.height; y += 1) {
+        for (let x = 0; x < fanCutoutState.maskOverlayCanvas.width; x += 1) {
+          if (!ctx.isPointInPath(path, x + 0.5, y + 0.5)) continue;
+          const index = (y * fanCutoutState.maskOverlayCanvas.width + x) * 4;
+          if (fanCutoutState.maskMode === 'add') {
+            imageData.data[index + 3] = 0;
+          } else {
+            imageData.data[index] = 255;
+            imageData.data[index + 1] = 0;
+            imageData.data[index + 2] = 0;
+            imageData.data[index + 3] = 128;
+          }
+        }
+      }
+      ctx.putImageData(imageData, 0, 0);
+      syncFanMaskOverlayCanvas();
+    }
+
+    function polishedFanMaskCanvas() {
+      const source = fanCutoutState.maskOverlayCanvas;
+      if (!source) return null;
+      const canvas = document.createElement('canvas');
+      canvas.width = source.width;
+      canvas.height = source.height;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.filter = 'blur(0.75px)';
+      ctx.drawImage(source, 0, 0);
+      ctx.filter = 'none';
+      return canvas;
+    }
+
+    async function confirmFanMaskCutout() {
+      if (!fanCutoutState.maskSourceImage || !fanCutoutState.maskOverlayCanvas) return;
+      const startTime = performance.now();
+      const width = fanCutoutState.maskOverlayCanvas.width;
+      const height = fanCutoutState.maskOverlayCanvas.height;
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(fanCutoutState.maskSourceImage, 0, 0, width, height);
+
+      const imageData = ctx.getImageData(0, 0, width, height);
+      const polishedMask = polishedFanMaskCanvas();
+      const maskCanvas = polishedMask || fanCutoutState.maskOverlayCanvas;
+      const maskData = maskCanvas.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, width, height).data;
+      for (let i = 0; i < imageData.data.length; i += 4) {
+        const removalStrength = Math.min(1, Math.max(0, maskData[i + 3] / 128));
+        imageData.data[i + 3] = Math.round(imageData.data[i + 3] * (1 - removalStrength));
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+      fanCutoutState.cutoutBlob = await fanCutoutCanvasToBlob(canvas);
+      revokeFanCutoutUrl('cutoutUrl');
+      fanCutoutState.cutoutUrl = URL.createObjectURL(fanCutoutState.cutoutBlob);
+      fanCutoutState.maskSourceImage = null;
+      fanCutoutState.maskOverlayCanvas = null;
+      fanCutoutTime('final compositing', startTime);
+      renderFanCutoutResult();
+    }
+
+    function renderFanCutoutResult() {
+      fanCutoutState.stage = 'result';
+      fanCutoutBody.innerHTML = `
+        <div class="fan-cutout-stage">
+          <p class="fan-cutout-help">Preview the transparent PNG, then apply it to this fan slot.</p>
+          <div class="fan-cutout-preview">
+            <img class="fan-cutout-result" src="${fanCutoutState.cutoutUrl}" alt="Fan cutout preview">
+          </div>
+        </div>
+      `;
+      setFanCutoutFooter(
+        fanCutoutAction('Back', '', renderFanCutoutCrop),
+        fanCutoutAction('Re-detect', '', () => {
+          revokeFanCutoutUrl('cutoutUrl');
+          fanCutoutState.cutoutBlob = null;
+          renderFanCutoutProcessing();
+        }),
+        fanCutoutAction('Use Cutout', 'primary', applyFanCutoutResult)
+      );
+    }
+
+    async function applyFanCutoutResult() {
+      if (!fanCutoutState.cutoutBlob) return;
+      const target = document.getElementById(fanCutoutState.targetId);
+      const thumb = document.getElementById(fanCutoutState.thumbId);
+      if (!target || !thumb) return;
+      const dataUrl = await blobToDataUrl(fanCutoutState.cutoutBlob);
+      target.src = dataUrl;
+      thumb.src = dataUrl;
+      target.style.setProperty('--fan-upload-grayscale', 1);
+      syncFanThumbVisual(target);
+      selectFanElement(target);
+      closeFanCutoutModal();
+    }
+
+    function loadFanCutoutImage(src) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = reject;
+        image.src = src;
+      });
+    }
+
+    function fanCutoutCanvasToBlob(canvas) {
+      return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+    }
+
+    function blobToDataUrl(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.addEventListener('load', () => resolve(reader.result));
+        reader.addEventListener('error', reject);
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    function captureUploadScrollPositions() {
+      return {
+        controls: controlsPanel ? controlsPanel.scrollTop : 0,
+        canvas: canvasWrap ? canvasWrap.scrollTop : 0,
+        document: document.documentElement.scrollTop,
+        body: document.body.scrollTop
+      };
+    }
+
+    function restoreUploadScrollPositions(saved) {
+      if (!saved) return;
+      if (controlsPanel) controlsPanel.scrollTop = saved.controls;
+      if (canvasWrap) canvasWrap.scrollTop = saved.canvas;
+      document.documentElement.scrollTop = saved.document;
+      document.body.scrollTop = saved.body;
+    }
+
+    function finishImageUploadPicker() {
+      if (!uploadPickerOpen) return;
+      uploadPickerOpen = false;
+      const saved = savedUploadScroll;
+      savedUploadScroll = null;
+      requestAnimationFrame(() => restoreUploadScrollPositions(saved));
+    }
+
+    function openImageUploadPicker(targetId, thumbId) {
+      if (!sharedUploadInput) return;
+      savedUploadScroll = captureUploadScrollPositions();
+      uploadPickerOpen = true;
+      sharedUploadInput.dataset.target = targetId;
+      sharedUploadInput.dataset.thumb = thumbId;
+      sharedUploadInput.value = '';
+      sharedUploadInput.click();
+    }
+
+    function initializeImageUploadPickers() {
+      if (!sharedUploadInput) return;
+
+      document.querySelectorAll('.upload-trigger').forEach((button) => {
+        button.addEventListener('click', () => {
+          openImageUploadPicker(button.dataset.target, button.dataset.thumb);
+        });
+      });
+
+      sharedUploadInput.addEventListener('change', () => {
+        readImageFile(sharedUploadInput);
+        finishImageUploadPicker();
+      });
+
+      sharedUploadInput.addEventListener('cancel', () => {
+        finishImageUploadPicker();
+      });
+
+      window.addEventListener('focus', () => {
+        if (uploadPickerOpen) {
+          window.setTimeout(finishImageUploadPicker, 0);
+        }
+      });
+    }
+
+    function readImageFile(input) {
+      const file = input.files && input.files[0];
+
+      if (!file) {
+        return;
+      }
+
+      const target = document.getElementById(input.dataset.target);
+      const thumb = document.getElementById(input.dataset.thumb);
+      if (!target || !thumb) {
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.addEventListener('load', () => {
+        target.src = reader.result;
+        thumb.src = reader.result;
+
+        const isFanTarget = target.classList.contains('fan');
+        if (isFanTarget) {
+          target.style.setProperty('--fan-upload-grayscale', 1);
+          syncFanThumbVisual(target);
+        } else {
+          thumb.style.filter = '';
+        }
+      });
+
+      reader.readAsDataURL(file);
+    }
+
+    function resetPlayerToOriginal() {
+      if (sharedUploadInput) sharedUploadInput.value = '';
+
+      playerImage.src = ORIGINAL_PLAYER_SRC;
+      playerThumb.src = ORIGINAL_PLAYER_SRC;
+
+      ['--fan-x', '--fan-y', '--fan-rot', '--fan-scale', '--fan-flip'].forEach((prop) => {
+        playerImage.style.removeProperty(prop);
+      });
+
+      document.querySelectorAll('.fan-range[data-target="player"]').forEach((range) => {
+        const kind = range.dataset.kind;
+        if (kind === 'offset') range.value = '-50';
+        else if (kind === 'offset-y') range.value = '-50';
+        else if (kind === 'angle') range.value = '0';
+        else if (kind === 'scale') range.value = '100';
+        updateFanRange(range);
+      });
+
+      document.querySelectorAll('.fan-flip[data-target="player"]').forEach((checkbox) => {
+        checkbox.checked = false;
+        updateFanFlip(checkbox);
+      });
+
+      clearFanSelection();
+    }
+
+    function syncFanFlipCheckboxFromComputed(fanEl) {
+      const raw = getComputedStyle(fanEl).getPropertyValue('--fan-flip').trim();
+      const flip = parseFloat(raw);
+      const checked = Number.isFinite(flip) ? flip < 0 : false;
+      document.querySelectorAll(`.fan-flip[data-target="${fanEl.id}"]`).forEach((checkbox) => {
+        checkbox.checked = checked;
+      });
+    }
+
+    function resetFanToOriginal(fanId) {
+      const src = ORIGINAL_FAN_SRC[fanId];
+      const fanEl = document.getElementById(fanId);
+      const thumb = document.getElementById(`thumb-${fanId}`);
+      if (!src || !fanEl || !fanEl.classList.contains('fan')) {
+        return;
+      }
+      if (sharedUploadInput) {
+        sharedUploadInput.value = '';
+      }
+      fanEl.src = src;
+      if (thumb) {
+        thumb.src = src;
+      }
+      FAN_INLINE_STYLE_PROPS.forEach((prop) => fanEl.style.removeProperty(prop));
+      syncFanRangeInputs(fanEl);
+      syncFanFlipCheckboxFromComputed(fanEl);
+      syncFanThumbVisual(fanEl);
+      clearFanSelection();
+    }
+
+    function consumeCutoutHandoff() {
+      const handoffImage = localStorage.getItem(HERO_CUTOUT_HANDOFF_KEY);
+      if (!handoffImage) return;
+      if (playerImage) playerImage.src = handoffImage;
+      if (playerThumb) playerThumb.src = handoffImage;
+      localStorage.removeItem(HERO_CUTOUT_HANDOFF_KEY);
+
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('fromCutout')) {
+        url.searchParams.delete('fromCutout');
+        history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
+      }
+    }
+
+    async function waitForPosterAssets() {
+      if (document.fonts && document.fonts.ready) {
+        await document.fonts.ready;
+      }
+
+      const imageLoads = [...poster.querySelectorAll('img')].map((image) => {
+        if (image.complete) {
+          return Promise.resolve();
+        }
+
+        if (image.decode) {
+          return image.decode().catch(() => undefined);
+        }
+
+        return new Promise((resolve) => {
+          image.addEventListener('load', resolve, { once: true });
+          image.addEventListener('error', resolve, { once: true });
+        });
+      });
+
+      await Promise.all(imageLoads);
+    }
+
+    sublineEmphasisInput.addEventListener('input', updatePosterText);
+
+    if (controlsCollapseToggle) {
+      controlsCollapseToggle.addEventListener('click', toggleControlsCollapsed);
+    }
+
+    mobileMediaQuery.addEventListener('change', syncMobileControlsPanel);
+    syncMobileControlsPanel();
+
+    handle.addEventListener('mousedown', (event) => {
+      if (isMobileLayout()) return;
+      event.preventDefault();
+      document.body.classList.add('resizing');
+
+      function resizePanel(moveEvent) {
+        const handleWidth = handle.offsetWidth;
+        const minPanelWidth = Math.max(240, window.innerWidth - handleWidth - window.innerWidth * 0.85);
+        const maxPanelWidth = window.innerWidth - handleWidth - 400;
+        const nextWidth = Math.min(Math.max(moveEvent.clientX, minPanelWidth), maxPanelWidth);
+        root.style.setProperty('--panel-width', `${nextWidth}px`);
+      }
+
+      function stopResize() {
+        document.body.classList.remove('resizing');
+        window.removeEventListener('mousemove', resizePanel);
+        window.removeEventListener('mouseup', stopResize);
+      }
+
+      window.addEventListener('mousemove', resizePanel);
+      window.addEventListener('mouseup', stopResize);
+    });
+
+    exportButton.addEventListener('click', async () => {
+      exportButton.disabled = true;
+      exportButton.textContent = 'Exporting...';
+
+      try {
+        await waitForPosterAssets();
+        const selectedFan = getSelectedFanElement();
+        hideFanSelectionUI();
+        const exportWidth = Number(getComputedStyle(root).getPropertyValue('--export-width'));
+        const posterRect = poster.getBoundingClientRect();
+        const dataUrl = await htmlToImage.toPng(poster, {
+          backgroundColor: null,
+          cacheBust: true,
+          pixelRatio: exportWidth / posterRect.width,
+          width: posterRect.width,
+          height: posterRect.height
+        });
+        const link = document.createElement('a');
+        link.download = 'since67-poster.png';
+        link.href = dataUrl;
+        link.click();
+        if (selectedFan) {
+          positionFanSelectionUI(selectedFan);
+        }
+      } finally {
+        exportButton.disabled = false;
+        exportButton.textContent = 'Export as PNG';
+      }
+    });
+
+    openHeroCutoutWorkspaceButton.addEventListener('click', () => {
+      window.open('hero-cutout-workspace.html', '_blank', 'noopener,noreferrer');
+    });
+
+    if (resetPlayerControlsButton) {
+      resetPlayerControlsButton.addEventListener('click', () => resetPlayerToOriginal());
+    }
+
+    document.querySelectorAll('.fan-reset-link').forEach((button) => {
+      button.addEventListener('click', () => resetFanToOriginal(button.dataset.resetFan));
+    });
+
+    document.querySelectorAll('.fan-cutout-placeholder').forEach((button) => {
+      button.addEventListener('mouseenter', () => warmFanCutoutBackgroundRemoval());
+      button.addEventListener('focus', () => warmFanCutoutBackgroundRemoval());
+      button.addEventListener('click', () => openFanCutoutModal(button));
+    });
+
+    fanCutoutClose.addEventListener('click', closeFanCutoutModal);
+    fanCutoutModal.addEventListener('pointerdown', (event) => {
+      if (event.target === fanCutoutModal) {
+        closeFanCutoutModal();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !fanCutoutModal.hidden) {
+        closeFanCutoutModal();
+      }
+    });
+
+    consumeCutoutHandoff();
+    updatePosterText();
+    initializeFanControls();
+    initializeImageUploadPickers();
+    initializePanelThumbSelect();
+    initializeFanPointerDrag();
+    initializeFanAssetHandles();
+    initializeDisplayDigitMotion();
+  </script>
+</body>
+</html>
