@@ -395,7 +395,17 @@
 
     .control-reset-wrap {
       grid-column: 1 / -1;
+      display: flex;
+      justify-content: center;
       margin-top: 2px;
+    }
+
+    .flip-reset-row {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
     }
 
     .control-reset-link {
@@ -1287,14 +1297,17 @@
             <button type="button" class="upload-button upload-trigger" data-target="player" data-thumb="thumb-player">Upload Image</button>
           </div>
           <div class="image-controls">
-            <label class="flip-control"><input class="fan-flip" type="checkbox" data-target="player"> Flip</label>
+            <div class="flip-reset-row">
+              <label class="flip-control"><input class="fan-flip" type="checkbox" data-target="player"> Flip</label>
+              <button type="button" class="control-reset-link fan-reset-position-link" data-reset-position="player">Reset Position</button>
+            </div>
             <label class="image-control-row">X <input class="fan-range" type="range" min="-80" max="-20" step="0.5" value="-50" data-target="player" data-prop="--fan-x" data-kind="offset"></label>
             <label class="image-control-row">Y <input class="fan-range" type="range" min="-100" max="0" step="0.5" value="-50" data-target="player" data-prop="--fan-y" data-kind="offset-y"></label>
             <label class="image-control-row">Rotate <input class="fan-range" type="range" min="-20" max="20" step="0.5" value="0" data-target="player" data-prop="--fan-rot" data-kind="angle"></label>
             <label class="image-control-row">Size <input class="fan-range" type="range" min="5" max="300" step="1" value="100" data-target="player" data-prop="--fan-scale" data-kind="scale"></label>
           </div>
           <div class="control-reset-wrap">
-            <button type="button" class="control-reset-link" id="reset-player-controls">Reset</button>
+            <button type="button" class="control-reset-link" id="reset-player-controls">Remove img & reset all</button>
           </div>
           <div class="secondary-action-wrap full-width">
             <button class="upload-button secondary-action" id="open-hero-cutout-workspace" type="button">Upload & Create My Cutout</button>
@@ -1314,7 +1327,10 @@
             <button type="button" class="upload-button upload-trigger" data-target="fan-top-left" data-thumb="thumb-fan-top-left">Upload Image</button>
           </div>
           <div class="image-controls">
-            <label class="flip-control"><input class="fan-flip" type="checkbox" data-target="fan-top-left"> Flip</label>
+            <div class="flip-reset-row">
+              <label class="flip-control"><input class="fan-flip" type="checkbox" data-target="fan-top-left"> Flip</label>
+              <button type="button" class="control-reset-link fan-reset-position-link" data-reset-position="fan-top-left">Reset Position</button>
+            </div>
             <label class="image-control-row">X <input class="fan-range" type="range" min="-12" max="32" step="0.5" value="14" data-target="fan-top-left" data-prop="--fan-x" data-kind="offset"></label>
             <label class="image-control-row">Y <input class="fan-range" type="range" min="-60" max="60" step="0.5" value="-8" data-target="fan-top-left" data-prop="--fan-y" data-kind="offset-y"></label>
             <label class="image-control-row">Rotate <input class="fan-range" type="range" min="-20" max="20" step="0.5" value="-2" data-target="fan-top-left" data-prop="--fan-rot" data-kind="angle"></label>
@@ -1323,10 +1339,10 @@
             <label class="image-control-row">Contrast <input class="fan-range" type="range" min="25" max="200" step="1" value="100" data-target="fan-top-left" data-prop="--fan-contrast" data-kind="contrast"></label>
           </div>
           <div class="control-reset-wrap">
-            <button type="button" class="control-reset-link fan-reset-link" data-reset-fan="fan-top-left">Reset</button>
+            <button type="button" class="control-reset-link fan-reset-link" data-reset-fan="fan-top-left">Remove img & reset all</button>
           </div>
           <div class="fan-cutout-placeholder-wrap">
-            <button class="upload-button secondary-action fan-cutout-placeholder" type="button">Upload & Create My Cutout</button>
+            <button class="upload-button secondary-action fan-cutout-placeholder" type="button">Upload & Create Fan Cutout</button>
           </div>
         </div>
 
@@ -1337,7 +1353,10 @@
             <button type="button" class="upload-button upload-trigger" data-target="fan-bottom-left" data-thumb="thumb-fan-bottom-left">Upload Image</button>
           </div>
           <div class="image-controls">
-            <label class="flip-control"><input class="fan-flip" type="checkbox" data-target="fan-bottom-left"> Flip</label>
+            <div class="flip-reset-row">
+              <label class="flip-control"><input class="fan-flip" type="checkbox" data-target="fan-bottom-left"> Flip</label>
+              <button type="button" class="control-reset-link fan-reset-position-link" data-reset-position="fan-bottom-left">Reset Position</button>
+            </div>
             <label class="image-control-row">X <input class="fan-range" type="range" min="-12" max="35" step="0.5" value="31.9" data-target="fan-bottom-left" data-prop="--fan-x" data-kind="offset"></label>
             <label class="image-control-row">Y <input class="fan-range" type="range" min="-60" max="60" step="0.5" value="-14.6" data-target="fan-bottom-left" data-prop="--fan-y" data-kind="offset-y"></label>
             <label class="image-control-row">Rotate <input class="fan-range" type="range" min="-20" max="20" step="0.5" value="-11" data-target="fan-bottom-left" data-prop="--fan-rot" data-kind="angle"></label>
@@ -1346,10 +1365,10 @@
             <label class="image-control-row">Contrast <input class="fan-range" type="range" min="25" max="200" step="1" value="100" data-target="fan-bottom-left" data-prop="--fan-contrast" data-kind="contrast"></label>
           </div>
           <div class="control-reset-wrap">
-            <button type="button" class="control-reset-link fan-reset-link" data-reset-fan="fan-bottom-left">Reset</button>
+            <button type="button" class="control-reset-link fan-reset-link" data-reset-fan="fan-bottom-left">Remove img & reset all</button>
           </div>
           <div class="fan-cutout-placeholder-wrap">
-            <button class="upload-button secondary-action fan-cutout-placeholder" type="button">Create My Fan Cutout</button>
+            <button class="upload-button secondary-action fan-cutout-placeholder" type="button">Upload & Create Fan Cutout</button>
           </div>
         </div>
 
@@ -1360,7 +1379,10 @@
             <button type="button" class="upload-button upload-trigger" data-target="fan-top-right" data-thumb="thumb-fan-top-right">Upload Image</button>
           </div>
           <div class="image-controls">
-            <label class="flip-control"><input class="fan-flip" type="checkbox" data-target="fan-top-right"> Flip</label>
+            <div class="flip-reset-row">
+              <label class="flip-control"><input class="fan-flip" type="checkbox" data-target="fan-top-right"> Flip</label>
+              <button type="button" class="control-reset-link fan-reset-position-link" data-reset-position="fan-top-right">Reset Position</button>
+            </div>
             <label class="image-control-row">X <input class="fan-range" type="range" min="-35" max="12" step="0.5" value="-32" data-target="fan-top-right" data-prop="--fan-x" data-kind="offset"></label>
             <label class="image-control-row">Y <input class="fan-range" type="range" min="-60" max="60" step="0.5" value="-15.8" data-target="fan-top-right" data-prop="--fan-y" data-kind="offset-y"></label>
             <label class="image-control-row">Rotate <input class="fan-range" type="range" min="-20" max="20" step="0.5" value="2.5" data-target="fan-top-right" data-prop="--fan-rot" data-kind="angle"></label>
@@ -1369,10 +1391,10 @@
             <label class="image-control-row">Contrast <input class="fan-range" type="range" min="25" max="200" step="1" value="100" data-target="fan-top-right" data-prop="--fan-contrast" data-kind="contrast"></label>
           </div>
           <div class="control-reset-wrap">
-            <button type="button" class="control-reset-link fan-reset-link" data-reset-fan="fan-top-right">Reset</button>
+            <button type="button" class="control-reset-link fan-reset-link" data-reset-fan="fan-top-right">Remove img & reset all</button>
           </div>
           <div class="fan-cutout-placeholder-wrap">
-            <button class="upload-button secondary-action fan-cutout-placeholder" type="button">Create My Fan Cutout</button>
+            <button class="upload-button secondary-action fan-cutout-placeholder" type="button">Upload & Create Fan Cutout</button>
           </div>
         </div>
 
@@ -1383,7 +1405,10 @@
             <button type="button" class="upload-button upload-trigger" data-target="fan-bottom-right" data-thumb="thumb-fan-bottom-right">Upload Image</button>
           </div>
           <div class="image-controls">
-            <label class="flip-control"><input class="fan-flip" type="checkbox" data-target="fan-bottom-right"> Flip</label>
+            <div class="flip-reset-row">
+              <label class="flip-control"><input class="fan-flip" type="checkbox" data-target="fan-bottom-right"> Flip</label>
+              <button type="button" class="control-reset-link fan-reset-position-link" data-reset-position="fan-bottom-right">Reset Position</button>
+            </div>
             <label class="image-control-row">X <input class="fan-range" type="range" min="-35" max="12" step="0.5" value="-28.3" data-target="fan-bottom-right" data-prop="--fan-x" data-kind="offset"></label>
             <label class="image-control-row">Y <input class="fan-range" type="range" min="-60" max="60" step="0.5" value="-8.6" data-target="fan-bottom-right" data-prop="--fan-y" data-kind="offset-y"></label>
             <label class="image-control-row">Rotate <input class="fan-range" type="range" min="-20" max="20" step="0.5" value="10" data-target="fan-bottom-right" data-prop="--fan-rot" data-kind="angle"></label>
@@ -1392,10 +1417,10 @@
             <label class="image-control-row">Contrast <input class="fan-range" type="range" min="25" max="200" step="1" value="100" data-target="fan-bottom-right" data-prop="--fan-contrast" data-kind="contrast"></label>
           </div>
           <div class="control-reset-wrap">
-            <button type="button" class="control-reset-link fan-reset-link" data-reset-fan="fan-bottom-right">Reset</button>
+            <button type="button" class="control-reset-link fan-reset-link" data-reset-fan="fan-bottom-right">Remove img & reset all</button>
           </div>
           <div class="fan-cutout-placeholder-wrap">
-            <button class="upload-button secondary-action fan-cutout-placeholder" type="button">Create My Fan Cutout</button>
+            <button class="upload-button secondary-action fan-cutout-placeholder" type="button">Upload & Create Fan Cutout</button>
           </div>
         </div>
       </section>
@@ -1529,6 +1554,40 @@
       'fan-top-right': 'img/figure-excited.svg',
       'fan-bottom-right': 'img/figure-tall.svg'
     };
+    const FAN_CUTOUT_CTA_UPLOAD = 'Upload & Create Fan Cutout';
+    const FAN_CUTOUT_CTA_CREATE = 'Create Fan Cutout';
+
+    function isFanUsingCustomImage(fanId) {
+      const fanEl = document.getElementById(fanId);
+      const original = ORIGINAL_FAN_SRC[fanId];
+      if (!fanEl || !original) return false;
+
+      const currentSrc = fanEl.getAttribute('src') || fanEl.src;
+      if (currentSrc.startsWith('data:') || currentSrc.startsWith('blob:')) {
+        return true;
+      }
+
+      try {
+        const currentPath = new URL(currentSrc, window.location.href).pathname;
+        const originalPath = new URL(original, window.location.href).pathname;
+        return currentPath !== originalPath;
+      } catch {
+        return currentSrc !== original;
+      }
+    }
+
+    function updateFanCutoutCtaLabels() {
+      document.querySelectorAll('[data-fan-panel]').forEach((slot) => {
+        const fanId = slot.dataset.fanPanel;
+        const button = slot.querySelector('.fan-cutout-placeholder');
+        if (!button || !fanId) return;
+        button.textContent = isFanUsingCustomImage(fanId)
+          ? FAN_CUTOUT_CTA_CREATE
+          : FAN_CUTOUT_CTA_UPLOAD;
+      });
+    }
+    const FAN_POSITION_PROPS = ['--fan-x', '--fan-y', '--fan-rot', '--fan-scale', '--fan-flip'];
+    const FAN_POSITION_RANGE_KINDS = new Set(['offset', 'offset-y', 'angle', 'scale']);
     const FAN_INLINE_STYLE_PROPS = [
       '--fan-x',
       '--fan-y',
@@ -1578,7 +1637,8 @@
       cutoutUrl: '',
       maskSourceImage: null,
       maskOverlayCanvas: null,
-      maskMode: 'add'
+      maskMode: 'add',
+      skippedUpload: false
     };
 
     function updatePosterText() {
@@ -2231,7 +2291,10 @@
     }
 
     function revokeFanCutoutUrl(key) {
-      if (fanCutoutState[key]) URL.revokeObjectURL(fanCutoutState[key]);
+      const url = fanCutoutState[key];
+      if (url && url.startsWith('blob:')) {
+        URL.revokeObjectURL(url);
+      }
       fanCutoutState[key] = '';
     }
 
@@ -2241,6 +2304,7 @@
       revokeFanCutoutUrl('croppedUrl');
       revokeFanCutoutUrl('cutoutUrl');
       fanCutoutState.stage = 'upload';
+      fanCutoutState.skippedUpload = false;
       if (!keepTarget) {
         fanCutoutState.targetId = '';
         fanCutoutState.thumbId = '';
@@ -2267,7 +2331,12 @@
       fanCutoutState.thumbId = uploadTrigger.dataset.thumb;
       fanCutoutModal.hidden = false;
       warmFanCutoutBackgroundRemoval();
-      renderFanCutoutUpload();
+      if (isFanUsingCustomImage(fanCutoutState.targetId)) {
+        fanCutoutState.skippedUpload = true;
+        loadFanCutoutSourceFromElement(fanCutoutState.targetId);
+      } else {
+        renderFanCutoutUpload();
+      }
     }
 
     function closeFanCutoutModal() {
@@ -2284,6 +2353,7 @@
 
     function renderFanCutoutUpload() {
       fanCutoutState.stage = 'upload';
+      fanCutoutState.skippedUpload = false;
       fanCutoutBody.innerHTML = `
         <div class="fan-cutout-stage">
           <p class="fan-cutout-help">Upload or drop a fan photo, then crop the subject before background removal.</p>
@@ -2355,11 +2425,46 @@
       renderFanCutoutCrop();
     }
 
+    async function loadFanCutoutSourceFromElement(fanId) {
+      const fanEl = document.getElementById(fanId);
+      if (!fanEl || !fanEl.src) {
+        renderFanCutoutUpload();
+        return;
+      }
+
+      const targetId = fanCutoutState.targetId;
+      const thumbId = fanCutoutState.thumbId;
+      resetFanCutoutState(true);
+      fanCutoutState.targetId = targetId;
+      fanCutoutState.thumbId = thumbId;
+      fanCutoutState.skippedUpload = true;
+
+      const loadRunId = fanCutoutRunId;
+      fanCutoutState.sourceFile = null;
+      fanCutoutState.sourceUrl = fanEl.src;
+      try {
+        fanCutoutState.sourceImage = await loadFanCutoutImage(fanCutoutState.sourceUrl);
+      } catch {
+        if (loadRunId !== fanCutoutRunId || fanCutoutModal.hidden) return;
+        renderFanCutoutUpload();
+        return;
+      }
+
+      if (loadRunId !== fanCutoutRunId || fanCutoutModal.hidden) return;
+      fanCutoutState.sourceWidth = fanCutoutState.sourceImage.naturalWidth;
+      fanCutoutState.sourceHeight = fanCutoutState.sourceImage.naturalHeight;
+      fanCutoutState.crop = null;
+      renderFanCutoutCrop();
+    }
+
     function renderFanCutoutCrop() {
       fanCutoutState.stage = 'crop';
+      const cropHelp = fanCutoutState.skippedUpload
+        ? 'Crop your uploaded fan photo. Drag over the image to keep just the fan area.'
+        : 'Drag over the image to keep just the fan area. You can redraw before clipping.';
       fanCutoutBody.innerHTML = `
         <div class="fan-cutout-stage">
-          <p class="fan-cutout-help">Drag over the image to keep just the fan area. You can redraw before clipping.</p>
+          <p class="fan-cutout-help">${cropHelp}</p>
           <div class="fan-cutout-crop-frame" id="fan-cutout-crop-frame">
             <img id="fan-cutout-crop-image" src="${fanCutoutState.sourceUrl}" alt="Uploaded fan image">
             <canvas class="fan-cutout-crop-canvas" id="fan-cutout-crop-canvas"></canvas>
@@ -2371,8 +2476,9 @@
       const canvas = document.getElementById('fan-cutout-crop-canvas');
       const clipButton = fanCutoutAction('Clip and remove background', 'primary', cropFanCutoutToBlob, !fanCutoutState.crop);
       const cropUi = { frame, image, canvas, clipButton, dragging: false, start: null, draft: null };
+      const cropBackAction = fanCutoutState.skippedUpload ? closeFanCutoutModal : renderFanCutoutUpload;
       setFanCutoutFooter(
-        fanCutoutAction('Back', '', renderFanCutoutUpload),
+        fanCutoutAction('Back', '', cropBackAction),
         fanCutoutAction('Clear selection', '', () => {
           fanCutoutState.crop = null;
           cropUi.draft = null;
@@ -2998,6 +3104,7 @@
       target.style.setProperty('--fan-upload-grayscale', 1);
       syncFanThumbVisual(target);
       selectFanElement(target);
+      updateFanCutoutCtaLabels();
       closeFanCutoutModal();
     }
 
@@ -3106,12 +3213,38 @@
         if (isFanTarget) {
           target.style.setProperty('--fan-upload-grayscale', 1);
           syncFanThumbVisual(target);
+          updateFanCutoutCtaLabels();
         } else {
           thumb.style.filter = '';
         }
       });
 
       reader.readAsDataURL(file);
+    }
+
+    function resetFanPosition(targetId) {
+      const target = document.getElementById(targetId);
+      if (!target) return;
+
+      FAN_POSITION_PROPS.forEach((prop) => target.style.removeProperty(prop));
+
+      document.querySelectorAll(`.fan-range[data-target="${targetId}"]`).forEach((range) => {
+        if (!FAN_POSITION_RANGE_KINDS.has(range.dataset.kind)) return;
+        range.value = range.defaultValue;
+        updateFanRange(range);
+      });
+
+      document.querySelectorAll(`.fan-flip[data-target="${targetId}"]`).forEach((checkbox) => {
+        checkbox.checked = false;
+        updateFanFlip(checkbox);
+      });
+
+      if (target.classList.contains('fan')) {
+        syncFanThumbVisual(target);
+      }
+      if (target.classList.contains('is-selected')) {
+        positionFanSelectionUI(target);
+      }
     }
 
     function resetPlayerToOriginal() {
@@ -3169,6 +3302,7 @@
       syncFanFlipCheckboxFromComputed(fanEl);
       syncFanThumbVisual(fanEl);
       clearFanSelection();
+      updateFanCutoutCtaLabels();
     }
 
     function consumeCutoutHandoff() {
@@ -3329,6 +3463,10 @@
       resetPlayerControlsButton.addEventListener('click', () => resetPlayerToOriginal());
     }
 
+    document.querySelectorAll('.fan-reset-position-link').forEach((button) => {
+      button.addEventListener('click', () => resetFanPosition(button.dataset.resetPosition));
+    });
+
     document.querySelectorAll('.fan-reset-link').forEach((button) => {
       button.addEventListener('click', () => resetFanToOriginal(button.dataset.resetFan));
     });
@@ -3354,6 +3492,7 @@
 
     consumeCutoutHandoff();
     updatePosterText();
+    updateFanCutoutCtaLabels();
     initializeFanControls();
     initializeImageUploadPickers();
     initializePanelThumbSelect();
